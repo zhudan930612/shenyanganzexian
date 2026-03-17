@@ -1,0 +1,1264 @@
+# =============================================================
+# AI写课工作流 · 栗子同学 v1.0.1
+# 栗子学院 · 保险课程视频脚本智能生成系统
+# =============================================================
+#
+# 【使用前必读】
+# 在导入前请完成知识库ID替换：
+# 1. 在百炼平台新建5个知识库并获取各库的知识库Code
+# 2. 在本文件中全局搜索替换以下5个占位符：
+#
+#    REPLACE_KB1_COMPLIANCE  →  合规红线库的知识库Code
+#    REPLACE_KB2_CONCEPTS    →  核心概念库的知识库Code
+#    REPLACE_KB3_LEGAL       →  法规条文库的知识库Code
+#    REPLACE_KB4_PRODUCTS    →  产品规则库的知识库Code
+#    REPLACE_KB5_CASES       →  司法案例库的知识库Code
+#
+# 3. 完成替换后，导入百炼工作流平台（工作流 > 导入）
+# 4. 测试时建议按分支逐一验证：
+#    - 知识课-旁白型（分支A：A1→A2→A3→A4→A5）
+#    - 知识课-对话型（分支B：B1→B2→B3→B4）
+#    - 案例课-旁白型（分支C：C1→C2→C3→C4→C5）
+#    - 案例课-对话型（分支D：D1→D2→D3→D4）
+#
+# 【工作流架构】
+# 输入 → 分析+角色匹配 → 5路并行检索 → 大纲生成 → 课程类型分支(4路)
+#   → 分支A/B/C/D各自串行生成 → 合规校验 → 最终输出
+#
+# 【知识库说明】
+# KB1 合规红线库：违禁表述、监管要求（每段生成都强制引用）
+# KB2 核心概念库：保险术语、产品概念解释
+# KB3 法规条文库：保险法、司法解释（精确到条文）
+# KB4 产品规则库：具体险种规则、条款要点
+# KB5 司法案例库：真实裁判文书案例（案例课必用）
+# =============================================================
+
+app:
+  mode: workflow
+  name: AI写课-栗子同学v1.0.1
+  subMode: chat
+kind: app
+version: 0.1.0
+workflow:
+  graph:
+    edges:
+    # ── 主干：输入 → 分析 ──
+    - id: Start_main-Start_main-LLM_analysis-LLM_analysis
+      source: Start_main
+      sourceHandle: Start_main
+      target: LLM_analysis
+      targetHandle: LLM_analysis
+
+    # ── 并行检索：分析完成后同步触发5个知识库检索 ──
+    - id: LLM_analysis-LLM_analysis-Retrieval_KB1-Retrieval_KB1
+      source: LLM_analysis
+      sourceHandle: LLM_analysis
+      target: Retrieval_KB1
+      targetHandle: Retrieval_KB1
+    - id: LLM_analysis-LLM_analysis-Retrieval_KB2-Retrieval_KB2
+      source: LLM_analysis
+      sourceHandle: LLM_analysis
+      target: Retrieval_KB2
+      targetHandle: Retrieval_KB2
+    - id: LLM_analysis-LLM_analysis-Retrieval_KB3-Retrieval_KB3
+      source: LLM_analysis
+      sourceHandle: LLM_analysis
+      target: Retrieval_KB3
+      targetHandle: Retrieval_KB3
+    - id: LLM_analysis-LLM_analysis-Retrieval_KB4-Retrieval_KB4
+      source: LLM_analysis
+      sourceHandle: LLM_analysis
+      target: Retrieval_KB4
+      targetHandle: Retrieval_KB4
+    - id: LLM_analysis-LLM_analysis-Retrieval_KB5-Retrieval_KB5
+      source: LLM_analysis
+      sourceHandle: LLM_analysis
+      target: Retrieval_KB5
+      targetHandle: Retrieval_KB5
+
+    # ── 5个检索结果汇入大纲节点（等待全部完成后执行）──
+    - id: Retrieval_KB1-Retrieval_KB1-LLM_outline-LLM_outline
+      source: Retrieval_KB1
+      sourceHandle: Retrieval_KB1
+      target: LLM_outline
+      targetHandle: LLM_outline
+    - id: Retrieval_KB2-Retrieval_KB2-LLM_outline-LLM_outline
+      source: Retrieval_KB2
+      sourceHandle: Retrieval_KB2
+      target: LLM_outline
+      targetHandle: LLM_outline
+    - id: Retrieval_KB3-Retrieval_KB3-LLM_outline-LLM_outline
+      source: Retrieval_KB3
+      sourceHandle: Retrieval_KB3
+      target: LLM_outline
+      targetHandle: LLM_outline
+    - id: Retrieval_KB4-Retrieval_KB4-LLM_outline-LLM_outline
+      source: Retrieval_KB4
+      sourceHandle: Retrieval_KB4
+      target: LLM_outline
+      targetHandle: LLM_outline
+    - id: Retrieval_KB5-Retrieval_KB5-LLM_outline-LLM_outline
+      source: Retrieval_KB5
+      sourceHandle: Retrieval_KB5
+      target: LLM_outline
+      targetHandle: LLM_outline
+
+    # ── 大纲 → 分支判断 ──
+    - id: LLM_outline-LLM_outline-Judge_branch-Judge_branch
+      source: LLM_outline
+      sourceHandle: LLM_outline
+      target: Judge_branch
+      targetHandle: Judge_branch
+
+    # ── 条件分支跳转 ──
+    - id: Judge_branch-branch_A-LLM_A1-LLM_A1
+      source: Judge_branch
+      sourceHandle: branch_A
+      target: LLM_A1
+      targetHandle: LLM_A1
+    - id: Judge_branch-branch_B-LLM_B1-LLM_B1
+      source: Judge_branch
+      sourceHandle: branch_B
+      target: LLM_B1
+      targetHandle: LLM_B1
+    - id: Judge_branch-branch_C-LLM_C1-LLM_C1
+      source: Judge_branch
+      sourceHandle: branch_C
+      target: LLM_C1
+      targetHandle: LLM_C1
+    - id: Judge_branch-branch_D-LLM_D1-LLM_D1
+      source: Judge_branch
+      sourceHandle: branch_D
+      target: LLM_D1
+      targetHandle: LLM_D1
+
+    # ── 分支A串行：知识课-旁白型（5节点）──
+    - id: LLM_A1-LLM_A1-LLM_A2-LLM_A2
+      source: LLM_A1
+      sourceHandle: LLM_A1
+      target: LLM_A2
+      targetHandle: LLM_A2
+    - id: LLM_A2-LLM_A2-LLM_A3-LLM_A3
+      source: LLM_A2
+      sourceHandle: LLM_A2
+      target: LLM_A3
+      targetHandle: LLM_A3
+    - id: LLM_A3-LLM_A3-LLM_A4-LLM_A4
+      source: LLM_A3
+      sourceHandle: LLM_A3
+      target: LLM_A4
+      targetHandle: LLM_A4
+    - id: LLM_A4-LLM_A4-LLM_A5-LLM_A5
+      source: LLM_A4
+      sourceHandle: LLM_A4
+      target: LLM_A5
+      targetHandle: LLM_A5
+
+    # ── 分支B串行：知识课-对话型（4节点）──
+    - id: LLM_B1-LLM_B1-LLM_B2-LLM_B2
+      source: LLM_B1
+      sourceHandle: LLM_B1
+      target: LLM_B2
+      targetHandle: LLM_B2
+    - id: LLM_B2-LLM_B2-LLM_B3-LLM_B3
+      source: LLM_B2
+      sourceHandle: LLM_B2
+      target: LLM_B3
+      targetHandle: LLM_B3
+    - id: LLM_B3-LLM_B3-LLM_B4-LLM_B4
+      source: LLM_B3
+      sourceHandle: LLM_B3
+      target: LLM_B4
+      targetHandle: LLM_B4
+
+    # ── 分支C串行：案例课-旁白型（5节点）──
+    - id: LLM_C1-LLM_C1-LLM_C2-LLM_C2
+      source: LLM_C1
+      sourceHandle: LLM_C1
+      target: LLM_C2
+      targetHandle: LLM_C2
+    - id: LLM_C2-LLM_C2-LLM_C3-LLM_C3
+      source: LLM_C2
+      sourceHandle: LLM_C2
+      target: LLM_C3
+      targetHandle: LLM_C3
+    - id: LLM_C3-LLM_C3-LLM_C4-LLM_C4
+      source: LLM_C3
+      sourceHandle: LLM_C3
+      target: LLM_C4
+      targetHandle: LLM_C4
+    - id: LLM_C4-LLM_C4-LLM_C5-LLM_C5
+      source: LLM_C4
+      sourceHandle: LLM_C4
+      target: LLM_C5
+      targetHandle: LLM_C5
+
+    # ── 分支D串行：案例课-对话型（4节点）──
+    - id: LLM_D1-LLM_D1-LLM_D2-LLM_D2
+      source: LLM_D1
+      sourceHandle: LLM_D1
+      target: LLM_D2
+      targetHandle: LLM_D2
+    - id: LLM_D2-LLM_D2-LLM_D3-LLM_D3
+      source: LLM_D2
+      sourceHandle: LLM_D2
+      target: LLM_D3
+      targetHandle: LLM_D3
+    - id: LLM_D3-LLM_D3-LLM_D4-LLM_D4
+      source: LLM_D3
+      sourceHandle: LLM_D3
+      target: LLM_D4
+      targetHandle: LLM_D4
+
+    # ── 4条分支末端收敛至合规校验 ──
+    # 注：只有一条分支会实际执行，未执行分支变量为空
+    - id: LLM_A5-LLM_A5-LLM_compliance-LLM_compliance
+      source: LLM_A5
+      sourceHandle: LLM_A5
+      target: LLM_compliance
+      targetHandle: LLM_compliance
+    - id: LLM_B4-LLM_B4-LLM_compliance-LLM_compliance
+      source: LLM_B4
+      sourceHandle: LLM_B4
+      target: LLM_compliance
+      targetHandle: LLM_compliance
+    - id: LLM_C5-LLM_C5-LLM_compliance-LLM_compliance
+      source: LLM_C5
+      sourceHandle: LLM_C5
+      target: LLM_compliance
+      targetHandle: LLM_compliance
+    - id: LLM_D4-LLM_D4-LLM_compliance-LLM_compliance
+      source: LLM_D4
+      sourceHandle: LLM_D4
+      target: LLM_compliance
+      targetHandle: LLM_compliance
+
+    # ── 合规校验 → 最终输出 ──
+    - id: LLM_compliance-LLM_compliance-End_main-End_main
+      source: LLM_compliance
+      sourceHandle: LLM_compliance
+      target: End_main
+      targetHandle: End_main
+
+    nodes:
+
+    # ════════════════════════════════════════
+    # 节点1：用户输入（Start节点）
+    # ════════════════════════════════════════
+    - id: Start_main
+      type: Start
+      name: 用户输入
+      x: 100
+      y: 400
+      config:
+        outputParams:
+        - key: input_topic
+          type: String
+          label: "课程主题（如：重疾险如实告知义务）"
+          required: true
+        - key: input_type
+          type: String
+          label: "课程类型：知识课-旁白型 / 知识课-对话型 / 案例课-旁白型 / 案例课-对话型"
+          required: true
+        - key: input_audience
+          type: String
+          label: "目标学员：新人代理人 / 在职代理人 / 客户教育"
+          required: true
+        - key: input_keypoints
+          type: String
+          label: "核心知识点（1-3个，逗号分隔）"
+          required: true
+        - key: input_duration
+          type: String
+          label: "脚本时长：5分钟（约800字） / 8分钟（约1200字）"
+          required: true
+
+    # ════════════════════════════════════════
+    # 节点2：课程分析+角色匹配（LLM节点）
+    # 输出：检索关键词 + 角色配置
+    # ════════════════════════════════════════
+    - id: LLM_analysis
+      type: LLM
+      name: 课程分析+角色匹配
+      x: 450
+      y: 400
+      config:
+        inputParams:
+        - key: input_topic
+          valueFrom: refer
+        - key: input_type
+          valueFrom: refer
+        - key: input_audience
+          valueFrom: refer
+        - key: input_keypoints
+          valueFrom: refer
+        - key: input_duration
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "你是栗子学院课程策划专家，负责分析课程需求并匹配角色配置。\n\n【课程信息】\n主题：${Start_main.input_topic}\n类型：${Start_main.input_type}\n学员：${Start_main.input_audience}\n知识点：${Start_main.input_keypoints}\n时长：${Start_main.input_duration}\n\n【任务一：检索关键词拆解】\n分别输出以下5个知识库的检索关键词（每库不超过3个，用逗号分隔）：\n\n=== 检索关键词 ===\n合规红线检索词：\n核心概念检索词：\n法规条文检索词：\n产品规则检索词：\n司法案例检索词：\n\n【任务二：角色匹配】\n根据课程类型和学员类型，从以下角色库中匹配本次脚本的角色配置：\n\n角色库：\n- 栗子精灵：品牌吉祥物，古灵精怪活泼，出现在片头片尾和要点提示\n- 美美：35岁资深代理人9年经验，精明能干热情直接，适合讲解分析\n- 乐乐：30岁新人代理人，沉稳憨厚乐天派，适合提问情景模拟\n- 高思聪：28岁，乐乐好友，外向爱社交，适合反面对比案例\n- 郑前：年轻男白领客户，24-30岁，有活力爱学习\n- 高美丽：年轻女白领客户，24-30岁，眼高手低\n- 张总：中年男企业主客户，40-50岁，重事业\n- 张太太：中年女全职太太客户，40-50岁，善理财\n- 刘老板：土豪客户，40-50岁，风险意识强但学习能力差\n\n匹配规则：\n知识课-旁白型 → 旁白者：美美，栗子精灵负责片尾\n知识课-对话型+新人代理人 → 角色A：美美（讲），角色B：乐乐（问）\n知识课-对话型+在职代理人 → 角色A：美美（分享），角色B：乐乐（讨论）\n知识课-对话型+客户教育 → 角色A：乐乐（代理人），角色B：匹配对应客户画像\n案例课-旁白型 → 旁白者：栗子精灵（故事感），美美负责分析段\n案例课-对话型+警示分析 → 角色A：美美，角色B：乐乐\n案例课-对话型+客户场景 → 角色A：乐乐（代理人），角色B：对应客户角色\n\n=== 角色配置 ===\n角色A：{名称} | 身份：{在本课中的身份} | 风格：{说话风格}\n角色B：{名称} | 身份：{在本课中的身份} | 风格：{说话风格}\n栗子精灵出场位置：{片头+片尾 / 仅片尾 / 要点提示}"
+          sysPromptContent: "你是栗子学院AI课程生产系统的策划分析助手。严格按照给定规则和输出格式输出，不添加额外内容。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.8
+              temperature: 0.3
+              enable_thinking: true
+              thinking_budget: 2000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # ════════════════════════════════════════
+    # 节点3A：合规红线库检索（Retrieval，与3B-3E并行）
+    # ════════════════════════════════════════
+    - id: Retrieval_KB1
+      type: Retrieval
+      name: 合规红线检索
+      x: 800
+      y: 50
+      config:
+        inputParams:
+        - key: query
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          topK: 8
+          search_mode: direct_search
+          knowledgeBaseCodeList:
+          - REPLACE_KB1_COMPLIANCE
+          query: "${Start_main.input_topic} ${Start_main.input_keypoints}"
+          scene_config:
+            rerank:
+              enable: true
+              modelId: qwen3-rerank
+            rewrite:
+              enable: true
+
+    # ════════════════════════════════════════
+    # 节点3B：核心概念库检索（并行）
+    # ════════════════════════════════════════
+    - id: Retrieval_KB2
+      type: Retrieval
+      name: 核心概念检索
+      x: 800
+      y: 200
+      config:
+        inputParams:
+        - key: query
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          topK: 5
+          search_mode: direct_search
+          knowledgeBaseCodeList:
+          - REPLACE_KB2_CONCEPTS
+          query: "${Start_main.input_topic} ${Start_main.input_keypoints}"
+          scene_config:
+            rerank:
+              enable: true
+              modelId: qwen3-rerank
+            rewrite:
+              enable: true
+
+    # ════════════════════════════════════════
+    # 节点3C：法规条文库检索（并行）
+    # ════════════════════════════════════════
+    - id: Retrieval_KB3
+      type: Retrieval
+      name: 法规条文检索
+      x: 800
+      y: 400
+      config:
+        inputParams:
+        - key: query
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          topK: 8
+          search_mode: direct_search
+          knowledgeBaseCodeList:
+          - REPLACE_KB3_LEGAL
+          query: "${Start_main.input_topic} ${Start_main.input_keypoints}"
+          scene_config:
+            rerank:
+              enable: true
+              modelId: qwen3-rerank
+            rewrite:
+              enable: true
+
+    # ════════════════════════════════════════
+    # 节点3D：产品规则库检索（并行）
+    # ════════════════════════════════════════
+    - id: Retrieval_KB4
+      type: Retrieval
+      name: 产品规则检索
+      x: 800
+      y: 600
+      config:
+        inputParams:
+        - key: query
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          topK: 8
+          search_mode: direct_search
+          knowledgeBaseCodeList:
+          - REPLACE_KB4_PRODUCTS
+          query: "${Start_main.input_topic} ${Start_main.input_keypoints}"
+          scene_config:
+            rerank:
+              enable: true
+              modelId: qwen3-rerank
+            rewrite:
+              enable: true
+
+    # ════════════════════════════════════════
+    # 节点3E：司法案例库检索（并行）
+    # ════════════════════════════════════════
+    - id: Retrieval_KB5
+      type: Retrieval
+      name: 司法案例检索
+      x: 800
+      y: 750
+      config:
+        inputParams:
+        - key: query
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          topK: 5
+          search_mode: direct_search
+          knowledgeBaseCodeList:
+          - REPLACE_KB5_CASES
+          query: "${Start_main.input_topic} ${Start_main.input_keypoints}"
+          scene_config:
+            rerank:
+              enable: true
+              modelId: qwen3-rerank
+            rewrite:
+              enable: true
+
+    # ════════════════════════════════════════
+    # 节点4：脚本大纲生成（LLM节点）
+    # 等待5个检索节点全部完成后执行
+    # ════════════════════════════════════════
+    - id: LLM_outline
+      type: LLM
+      name: 脚本大纲生成
+      x: 1150
+      y: 400
+      config:
+        inputParams:
+        - key: analysis
+          valueFrom: refer
+        - key: kb1
+          valueFrom: refer
+        - key: kb2
+          valueFrom: refer
+        - key: kb3
+          valueFrom: refer
+        - key: kb4
+          valueFrom: refer
+        - key: kb5
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "你是栗子学院课程编导，根据课程信息和已检索的知识内容，生成脚本大纲。\n只输出骨架，不生成正文内容。\n\n【课程信息】\n主题：${Start_main.input_topic}\n类型：${Start_main.input_type}\n学员：${Start_main.input_audience}\n核心知识点：${Start_main.input_keypoints}\n时长：${Start_main.input_duration}\n\n【分析结果与角色配置】\n${LLM_analysis.result}\n\n【检索到的知识内容】\n\n合规红线：\n${Retrieval_KB1.result}\n\n核心概念：\n${Retrieval_KB2.result}\n\n法规条文：\n${Retrieval_KB3.result}\n\n产品规则：\n${Retrieval_KB4.result}\n\n司法案例：\n${Retrieval_KB5.result}\n\n【按课程类型输出对应大纲】\n\n若为知识课-旁白型，输出：\n① 开场白要点（背景引入+主题，1-2句）\n② 知识点1（概念+法规依据，标注引用哪条法规）\n③ 知识点2（规则+实操说明）\n④ 知识点3（常见误区，如知识点不足3个可合并到③）\n⑤ 总结要点（3条行动建议+栗子精灵提示语方向）\n\n若为知识课-对话型，输出：\n① 栗子精灵片头（引出话题的悬念点）\n② 对话前段：角色B的提问方向+角色A回答的核心内容\n③ 对话后段：深化方向+法规穿插方式\n④ 栗子精灵片尾（3个核心要点）\n\n若为案例课-旁白型，输出：\n① 悬念式开场（先抛出结果的方式）\n② 案例还原要点（选用哪个案例，人物+场景要素）\n③ 法律分析角度（聚焦哪条法规，争议点是什么）\n④ 判决结果（支持哪方，核心依据）\n⑤ 实务启示（3条行动建议+栗子精灵警示语方向）\n\n若为案例课-对话型，输出：\n① 栗子精灵片头（引发思考的问题）\n② 案例1要点（选用哪个案例，分析角度）\n③ 案例2要点（选用哪个案例，与案例1的对比点）\n④ 总结警示（3条行动建议）\n⑤ 栗子精灵片尾（3个核心要点）\n\n重要约束：严格基于已检索到的知识内容生成大纲，不引用未在以上内容中出现的法规条文或案例。"
+          sysPromptContent: "你是栗子学院AI课程生产系统的编导助手。严格基于检索到的知识内容生成大纲，只输出骨架框架，不生成正文内容。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.8
+              temperature: 0.5
+              enable_thinking: true
+              thinking_budget: 3000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # ════════════════════════════════════════
+    # 节点5：课程类型分支（Judge节点，4路）
+    # ════════════════════════════════════════
+    - id: Judge_branch
+      type: Judge
+      name: 课程类型分支
+      x: 1500
+      y: 400
+      config:
+        inputParams:
+        - key: input_type
+          valueFrom: refer
+        nodeParam:
+          branches:
+          - id: branch_A
+            label: 知识课-旁白型
+            conditions:
+            - left: "${Start_main.input_type}"
+              right: 知识课-旁白型
+              operator: equals
+            targetIds:
+            - LLM_A1
+          - id: branch_B
+            label: 知识课-对话型
+            conditions:
+            - left: "${Start_main.input_type}"
+              right: 知识课-对话型
+              operator: equals
+            targetIds:
+            - LLM_B1
+          - id: branch_C
+            label: 案例课-旁白型
+            conditions:
+            - left: "${Start_main.input_type}"
+              right: 案例课-旁白型
+              operator: equals
+            targetIds:
+            - LLM_C1
+          - id: branch_D
+            label: 案例课-对话型
+            conditions:
+            - left: "${Start_main.input_type}"
+              right: 案例课-对话型
+              operator: equals
+            targetIds:
+            - LLM_D1
+
+    # ════════════════════════════════════════
+    # 分支A：知识课-旁白型（5个串行节点）
+    # 旁白者：美美；片尾：栗子精灵
+    # ════════════════════════════════════════
+
+    # A①：开场白
+    - id: LLM_A1
+      type: LLM
+      name: A①开场白
+      x: 1850
+      y: 50
+      config:
+        inputParams:
+        - key: topic
+          valueFrom: refer
+        - key: outline
+          valueFrom: refer
+        - key: kb1
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "旁白者：美美（35岁资深代理人，精明能干热情直接，说话像老姐姐分享经验）\n\n任务：为本课写开场白。\n\n课程主题：${Start_main.input_topic}\n目标学员：${Start_main.input_audience}\n\n开场白大纲要点（取大纲①部分）：\n${LLM_outline.result}\n\n合规红线（以下表述不得出现）：\n${Retrieval_KB1.result}\n\n要求：\n- 字数：100-130字\n- 结构：提出学员真实痛点或工作场景 → 引出本课主题\n- 口语化，适合直接朗读，不用书面语句式\n- 不直接给结论，用场景引出疑问\n- 严格遵守合规红线，不得使用任何违规表述\n\n直接输出正文，不加标题，不加角色名称前缀。"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手，以美美的口吻写作。严格遵守合规红线，只基于已提供的知识内容进行创作。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.9
+              temperature: 0.7
+              enable_thinking: true
+              thinking_budget: 2000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # A②：知识点1讲解
+    - id: LLM_A2
+      type: LLM
+      name: A②知识点1
+      x: 2200
+      y: 50
+      config:
+        inputParams:
+        - key: seg1
+          valueFrom: refer
+        - key: outline
+          valueFrom: refer
+        - key: kb1
+          valueFrom: refer
+        - key: kb2
+          valueFrom: refer
+        - key: kb3
+          valueFrom: refer
+        - key: kb4
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "旁白者：美美\n\n任务：讲解第一个知识点。\n\n上文内容（自然衔接，不重复已说内容）：\n${LLM_A1.result}\n\n本段大纲要点（取大纲②部分）：\n${LLM_outline.result}\n\n可引用法规（只能引用以下内容，不得自行补充）：\n${Retrieval_KB3.result}\n\n可引用概念定义（只能引用以下内容，不得自行补充）：\n${Retrieval_KB2.result}\n\n可引用产品规则（只能引用以下内容，不得自行补充）：\n${Retrieval_KB4.result}\n\n合规红线（不得出现以下表述）：\n${Retrieval_KB1.result}\n\n要求：\n- 字数：150-180字\n- 结构：是什么 → 为什么重要 → 实操中怎么用\n- 法规引用格式：《XX法》第X条规定："原文"\n- 有具体例子或数据，不说空话\n- 严格遵守合规红线\n\n直接输出正文，不加标题。"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手，以美美的口吻写作。严格遵守合规红线，只引用已检索到的法规和概念，不引用未出现的内容。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.9
+              temperature: 0.7
+              enable_thinking: true
+              thinking_budget: 2000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # A③：知识点2讲解
+    - id: LLM_A3
+      type: LLM
+      name: A③知识点2
+      x: 2550
+      y: 50
+      config:
+        inputParams:
+        - key: seg2
+          valueFrom: refer
+        - key: outline
+          valueFrom: refer
+        - key: kb1
+          valueFrom: refer
+        - key: kb2
+          valueFrom: refer
+        - key: kb3
+          valueFrom: refer
+        - key: kb4
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "旁白者：美美\n\n任务：讲解第二个知识点，自然承接上文。\n\n上文内容（自然衔接，不重复已说内容）：\n${LLM_A2.result}\n\n本段大纲要点（取大纲③部分）：\n${LLM_outline.result}\n\n可引用法规（只能引用以下内容，不得自行补充）：\n${Retrieval_KB3.result}\n\n可引用概念定义（只能引用以下内容，不得自行补充）：\n${Retrieval_KB2.result}\n\n可引用产品规则（只能引用以下内容，不得自行补充）：\n${Retrieval_KB4.result}\n\n合规红线（不得出现以下表述）：\n${Retrieval_KB1.result}\n\n要求：\n- 字数：150-180字\n- 结构：是什么 → 为什么重要 → 实操中怎么用\n- 法规引用格式：《XX法》第X条规定："原文"\n- 有具体例子或数据，不说空话\n- 严格遵守合规红线\n\n直接输出正文，不加标题。"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手，以美美的口吻写作。严格遵守合规红线，只引用已检索到的法规和概念，不引用未出现的内容。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.9
+              temperature: 0.7
+              enable_thinking: true
+              thinking_budget: 2000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # A④：知识点3/常见误区
+    - id: LLM_A4
+      type: LLM
+      name: A④知识点3/误区
+      x: 2900
+      y: 50
+      config:
+        inputParams:
+        - key: seg3
+          valueFrom: refer
+        - key: outline
+          valueFrom: refer
+        - key: kb1
+          valueFrom: refer
+        - key: kb2
+          valueFrom: refer
+        - key: kb3
+          valueFrom: refer
+        - key: kb4
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "旁白者：美美\n\n任务：讲解第三个知识点或常见误区，自然承接上文。\n\n上文内容（自然衔接，不重复已说内容）：\n${LLM_A3.result}\n\n本段大纲要点（取大纲④部分）：\n${LLM_outline.result}\n\n可引用法规（只能引用以下内容，不得自行补充）：\n${Retrieval_KB3.result}\n\n可引用概念定义（只能引用以下内容，不得自行补充）：\n${Retrieval_KB2.result}\n\n可引用产品规则（只能引用以下内容，不得自行补充）：\n${Retrieval_KB4.result}\n\n合规红线（不得出现以下表述）：\n${Retrieval_KB1.result}\n\n要求：\n- 字数：150-180字\n- 如果是知识点：是什么 → 为什么重要 → 实操中怎么用\n- 如果是常见误区：列举2-3个具体误区 → 正确做法\n- 有具体例子，不说空话\n- 严格遵守合规红线\n\n直接输出正文，不加标题。"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手，以美美的口吻写作。严格遵守合规红线，只引用已检索到的法规和概念，不引用未出现的内容。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.9
+              temperature: 0.7
+              enable_thinking: true
+              thinking_budget: 2000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # A⑤：总结+栗子精灵（分支A末端，接入合规校验）
+    - id: LLM_A5
+      type: LLM
+      name: A⑤总结+栗子精灵
+      x: 3250
+      y: 50
+      config:
+        inputParams:
+        - key: outline
+          valueFrom: refer
+        - key: kb1
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "任务：写课程总结，最后由栗子精灵出场收尾。\n\n本课完整大纲（从中提取各段核心结论）：\n${LLM_outline.result}\n\n本课各段已生成内容（汇总参考）：\n开场白：${LLM_A1.result}\n\n知识点1：${LLM_A2.result}\n\n知识点2：${LLM_A3.result}\n\n知识点3/误区：${LLM_A4.result}\n\n合规红线（不得出现以下表述）：\n${Retrieval_KB1.result}\n\n要求：\n美美总结部分：80-100字，回顾本课核心（1句话）→ 给出3条具体行动建议\n栗子精灵出场：60-80字，活泼俏皮，提炼全课最重要的1个记忆点\n\n输出格式：\n美美：xxx\n栗子精灵：xxx\n\n严格遵守合规红线，不得使用收益承诺、保障承诺等违规表述。"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手。写出实用的行动建议和活泼的栗子精灵收尾，严格遵守合规红线。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.9
+              temperature: 0.7
+              enable_thinking: true
+              thinking_budget: 2000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # ════════════════════════════════════════
+    # 分支B：知识课-对话型（4个串行节点）
+    # 角色：美美（讲）+ 乐乐（问）+ 栗子精灵（片头片尾）
+    # ════════════════════════════════════════
+
+    # B①：栗子精灵片头
+    - id: LLM_B1
+      type: LLM
+      name: B①栗子精灵片头
+      x: 1850
+      y: 250
+      config:
+        inputParams:
+        - key: topic
+          valueFrom: refer
+        - key: outline
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "角色：栗子精灵，品牌吉祥物，古灵精怪活泼，小书童形象\n\n任务：写片头，引出本课话题。\n\n课程主题：${Start_main.input_topic}\n\n片头大纲要点（取大纲①部分）：\n${LLM_outline.result}\n\n角色配置（本课两位主角信息）：\n${LLM_analysis.result}\n\n要求：\n- 字数：60-80字\n- 方式：提出一个悬念问题或反常识的现象，让学员想继续看\n- 预告本课两位主角出场（使用角色配置中的角色名）\n- 不直接说答案\n\n输出格式：\n栗子精灵：xxx"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手，以栗子精灵的口吻写片头，活泼俏皮，勾起学员好奇心。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.9
+              temperature: 0.8
+              enable_thinking: true
+              thinking_budget: 1000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # B②：对话主体-前段
+    - id: LLM_B2
+      type: LLM
+      name: B②对话前段
+      x: 2200
+      y: 250
+      config:
+        inputParams:
+        - key: seg1
+          valueFrom: refer
+        - key: outline
+          valueFrom: refer
+        - key: kb1
+          valueFrom: refer
+        - key: kb2
+          valueFrom: refer
+        - key: kb3
+          valueFrom: refer
+        - key: kb4
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "【角色设定】\n${LLM_analysis.result}\n\n上文内容（自然衔接，不重复）：\n${LLM_B1.result}\n\n本段大纲要点（取大纲②部分）：\n${LLM_outline.result}\n\n可引用法规（只能引用以下内容）：\n${Retrieval_KB3.result}\n\n可引用概念（只能引用以下内容）：\n${Retrieval_KB2.result}\n\n可引用产品规则（只能引用以下内容）：\n${Retrieval_KB4.result}\n\n合规红线（不得出现以下表述）：\n${Retrieval_KB1.result}\n\n要求：\n- 字数：220-280字\n- 对话来回不少于4轮，每轮不超过80字\n- 角色B的问题贴近真实工作场景，不做作\n- 角色A的回答有具体例子支撑\n- 法规引用自然穿插，不生硬堆砌\n- 严格遵守合规红线\n\n输出格式（使用角色配置中的实际角色名）：\n角色B名：xxx\n角色A名：xxx\n...（至少4轮对话）"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手。以真实自然的对话方式展示保险知识，严格遵守合规红线，不引用未检索到的内容。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.9
+              temperature: 0.75
+              enable_thinking: true
+              thinking_budget: 2000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # B③：对话主体-后段
+    - id: LLM_B3
+      type: LLM
+      name: B③对话后段
+      x: 2550
+      y: 250
+      config:
+        inputParams:
+        - key: seg2
+          valueFrom: refer
+        - key: outline
+          valueFrom: refer
+        - key: kb1
+          valueFrom: refer
+        - key: kb2
+          valueFrom: refer
+        - key: kb3
+          valueFrom: refer
+        - key: kb4
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "【角色设定】\n${LLM_analysis.result}\n\n上文内容（自然衔接，不重复）：\n${LLM_B2.result}\n\n本段大纲要点（取大纲③部分，聚焦深化内容和实操指导）：\n${LLM_outline.result}\n\n可引用法规（只能引用以下内容）：\n${Retrieval_KB3.result}\n\n可引用概念（只能引用以下内容）：\n${Retrieval_KB2.result}\n\n可引用产品规则（只能引用以下内容）：\n${Retrieval_KB4.result}\n\n合规红线（不得出现以下表述）：\n${Retrieval_KB1.result}\n\n要求：\n- 字数：180-220字\n- 对话来回不少于3轮，每轮不超过80字\n- 聚焦实操指导，给出具体可操作的建议\n- 法规引用自然穿插\n- 严格遵守合规红线\n\n输出格式（使用角色配置中的实际角色名）：\n角色B名：xxx\n角色A名：xxx\n...（至少3轮对话）"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手。以真实自然的对话方式展示保险知识实操指导，严格遵守合规红线。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.9
+              temperature: 0.75
+              enable_thinking: true
+              thinking_budget: 2000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # B④：栗子精灵片尾（分支B末端，接入合规校验）
+    - id: LLM_B4
+      type: LLM
+      name: B④栗子精灵片尾
+      x: 2900
+      y: 250
+      config:
+        inputParams:
+        - key: outline
+          valueFrom: refer
+        - key: kb1
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "任务：两人简短收尾后，栗子精灵出场提炼全课要点。\n\n本课核心要点（取大纲④部分）：\n${LLM_outline.result}\n\n角色设定：\n${LLM_analysis.result}\n\n合规红线（不得出现以下表述）：\n${Retrieval_KB1.result}\n\n本课各段内容参考：\n片头：${LLM_B1.result}\n\n对话前段：${LLM_B2.result}\n\n对话后段：${LLM_B3.result}\n\n要求：\n两人收尾对话：50-60字，角色B用一句话概括本课最大收获\n栗子精灵：70-90字，提炼3个核心要点，活泼收尾\n\n输出格式（使用角色配置中的实际角色名）：\n角色B名：xxx\n角色A名：xxx\n栗子精灵：xxx\n\n严格遵守合规红线，不得使用收益承诺等违规表述。"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手。写出温馨活泼的对话收尾，严格遵守合规红线。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.9
+              temperature: 0.75
+              enable_thinking: true
+              thinking_budget: 1500
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # ════════════════════════════════════════
+    # 分支C：案例课-旁白型（5个串行节点）
+    # 旁白者：栗子精灵（叙事）+ 美美（分析）
+    # ════════════════════════════════════════
+
+    # C①：悬念式开场
+    - id: LLM_C1
+      type: LLM
+      name: C①悬念式开场
+      x: 1850
+      y: 550
+      config:
+        inputParams:
+        - key: topic
+          valueFrom: refer
+        - key: outline
+          valueFrom: refer
+        - key: kb5
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "旁白者：栗子精灵（讲故事语气，活泼有悬念感）\n\n任务：写案例课开场，用悬念引入。\n\n课程主题：${Start_main.input_topic}\n\n开场大纲要点（取大纲①部分）：\n${LLM_outline.result}\n\n本课使用的真实案例（严格基于以下内容）：\n${Retrieval_KB5.result}\n\n要求：\n- 字数：80-100字\n- 方式：先说案例结果，引发"为什么"的好奇\n- 不提案例当事人真实姓名，用角色化称呼（如"某位代理人"、"一位客户"）\n- 不解释原因，留悬念\n\n直接输出正文，不加标题。"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手，以栗子精灵的口吻讲述，活泼有悬念感。严格基于已检索到的真实案例，不得虚构。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.9
+              temperature: 0.8
+              enable_thinking: true
+              thinking_budget: 1000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # C②：案例还原（含案例不足保护机制）
+    - id: LLM_C2
+      type: LLM
+      name: C②案例还原
+      x: 2200
+      y: 550
+      config:
+        inputParams:
+        - key: seg1
+          valueFrom: refer
+        - key: outline
+          valueFrom: refer
+        - key: kb5
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "旁白者：栗子精灵\n\n上文内容：\n${LLM_C1.result}\n\n任务：还原案例经过。\n\n本段大纲要点（取大纲②部分）：\n${LLM_outline.result}\n\n【重要约束】真实案例（严格基于以下内容，不得改编或补充细节）：\n${Retrieval_KB5.result}\n\n【安全保护机制——不可删除不可修改】\n若以上案例与课程主题不匹配，或案例内容明显不足以支撑还原，必须直接输出以下提示语，不得继续生成：\n"【提示】案例库暂无完全匹配案例，请人工补充真实案例后，重新运行本节点。本节点拒绝生成虚假案例。"\n\n要求（仅在案例内容充足时执行）：\n- 字数：150-180字\n- 结构：人物背景 → 投保经过 → 出险情况 → 争议产生\n- 故事感强，关键数字和时间节点要清晰\n- 不提案例当事人真实姓名，用角色化称呼\n\n直接输出正文，不加标题。"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手。只基于真实检索到的案例内容，不得虚构任何案例细节。案例不足时必须输出保护提示语。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.8
+              temperature: 0.5
+              enable_thinking: true
+              thinking_budget: 2000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # C③：法律分析
+    - id: LLM_C3
+      type: LLM
+      name: C③法律分析
+      x: 2550
+      y: 550
+      config:
+        inputParams:
+        - key: seg2
+          valueFrom: refer
+        - key: outline
+          valueFrom: refer
+        - key: kb1
+          valueFrom: refer
+        - key: kb3
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "旁白者：美美（切换为专业分析视角，热情直接）\n\n上文案例内容：\n${LLM_C2.result}\n\n任务：从法律角度分析案例争议。\n\n本段大纲要点（取大纲③部分）：\n${LLM_outline.result}\n\n可引用法规（只能引用以下内容，不得自行补充）：\n${Retrieval_KB3.result}\n\n合规红线（不得出现以下表述）：\n${Retrieval_KB1.result}\n\n要求：\n- 字数：150-180字\n- 聚焦1-2个法律争议点\n- 法规引用格式：《XX法》第X条规定："原文"\n- 分析要有明确结论\n- 严格遵守合规红线\n\n直接输出正文，不加标题，不加角色名称前缀。"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手，以美美的专业口吻进行法律分析。只引用已检索到的法规内容，严格遵守合规红线。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.8
+              temperature: 0.5
+              enable_thinking: true
+              thinking_budget: 2000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # C④：判决结果
+    - id: LLM_C4
+      type: LLM
+      name: C④判决结果
+      x: 2900
+      y: 550
+      config:
+        inputParams:
+        - key: seg3
+          valueFrom: refer
+        - key: outline
+          valueFrom: refer
+        - key: kb5
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "旁白者：栗子精灵\n\n上文法律分析：\n${LLM_C3.result}\n\n任务：呈现法院判决结果。\n\n本段大纲要点（取大纲④部分）：\n${LLM_outline.result}\n\n【重要约束】真实案例判决（严格基于以下内容，不得推测或补充）：\n${Retrieval_KB5.result}\n\n若案例中无明确判决内容，必须输出：\n"【提示】案例库中该案例暂无判决结果记录，请人工补充完整案例信息后继续。"\n\n要求（仅在判决内容充足时执行）：\n- 字数：80-100字\n- 清晰说明：支持哪方 + 核心判决依据\n- 语气平稳，客观陈述\n\n直接输出正文，不加标题。"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手。客观呈现判决结果，只基于已检索到的案例内容，不得推测或虚构。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.8
+              temperature: 0.4
+              enable_thinking: false
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # C⑤：实务启示+栗子精灵收尾（分支C末端，接入合规校验）
+    - id: LLM_C5
+      type: LLM
+      name: C⑤实务启示+收尾
+      x: 3250
+      y: 550
+      config:
+        inputParams:
+        - key: outline
+          valueFrom: refer
+        - key: kb1
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "旁白者：美美 + 栗子精灵收尾\n\n本课核心启示（取大纲⑤部分）：\n${LLM_outline.result}\n\n合规红线（不得出现以下表述）：\n${Retrieval_KB1.result}\n\n本课各段内容参考：\n开场：${LLM_C1.result}\n\n案例还原：${LLM_C2.result}\n\n法律分析：${LLM_C3.result}\n\n判决结果：${LLM_C4.result}\n\n要求：\n美美部分：100-130字，给出3条具体可操作的行动建议，基于本案要点，不说空话\n栗子精灵：60-80字，用一句有冲击力的警示语收尾\n\n输出格式：\n美美：xxx\n栗子精灵：xxx\n\n严格遵守合规红线，不得使用收益承诺、保障承诺等违规表述。"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手。给出实用的行动建议，以栗子精灵有力的警示语收尾，严格遵守合规红线。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.9
+              temperature: 0.7
+              enable_thinking: true
+              thinking_budget: 1500
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # ════════════════════════════════════════
+    # 分支D：案例课-对话型（4个串行节点）
+    # 角色：美美+乐乐（或代理人+客户）+ 栗子精灵（片头片尾）
+    # ════════════════════════════════════════
+
+    # D①：栗子精灵片头
+    - id: LLM_D1
+      type: LLM
+      name: D①栗子精灵片头
+      x: 1850
+      y: 750
+      config:
+        inputParams:
+        - key: topic
+          valueFrom: refer
+        - key: outline
+          valueFrom: refer
+        - key: kb5
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "角色：栗子精灵\n\n任务：引出本课讨论话题。\n\n课程主题：${Start_main.input_topic}\n\n片头大纲要点（取大纲①部分）：\n${LLM_outline.result}\n\n司法案例库内容（用于预告今天对比的案例类型）：\n${Retrieval_KB5.result}\n\n要求：\n- 字数：60-80字\n- 提出一个让学员产生共鸣的真实问题或困惑\n- 预告今天要对比分析的两个案例\n- 活泼有趣，不说教\n\n输出格式：\n栗子精灵：xxx"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手，以栗子精灵口吻写片头，活泼俏皮，勾起学员好奇心。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.9
+              temperature: 0.8
+              enable_thinking: true
+              thinking_budget: 1000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # D②：案例1呈现+分析（含案例不足保护机制）
+    - id: LLM_D2
+      type: LLM
+      name: D②案例1+分析
+      x: 2200
+      y: 750
+      config:
+        inputParams:
+        - key: seg1
+          valueFrom: refer
+        - key: outline
+          valueFrom: refer
+        - key: kb1
+          valueFrom: refer
+        - key: kb3
+          valueFrom: refer
+        - key: kb5
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "【角色设定】\n${LLM_analysis.result}\n\n上文内容：\n${LLM_D1.result}\n\n任务：呈现并分析案例1。\n\n案例1大纲要点（取大纲②部分）：\n${LLM_outline.result}\n\n【重要约束】真实案例1（严格基于以下第1条案例内容，不得改编）：\n${Retrieval_KB5.result}\n\n可引用法规（只能引用以下内容）：\n${Retrieval_KB3.result}\n\n合规红线（不得出现以下表述）：\n${Retrieval_KB1.result}\n\n【安全保护机制——不可删除不可修改】\n若案例库内容不足或不匹配，必须直接输出：\n"【提示】案例1暂无匹配内容，请人工补充真实案例后，重新运行本节点。本节点拒绝生成虚假案例。"\n\n要求（仅在案例充足时执行）：\n- 字数：200-250字\n- 对话来回不少于4轮，每轮不超过80字\n- 案例呈现要有人物感和故事感\n- 通过对话自然引出法律分析\n- 严格遵守合规红线\n\n输出格式（使用角色配置中的实际角色名）：\n角色名：xxx\n角色名：xxx\n...（至少4轮对话）"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手。只基于真实检索到的案例，案例不足时必须输出保护提示语，不得虚构。严格遵守合规红线。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.8
+              temperature: 0.6
+              enable_thinking: true
+              thinking_budget: 2000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # D③：案例2对比+分析（含案例不足保护机制）
+    - id: LLM_D3
+      type: LLM
+      name: D③案例2+对比
+      x: 2550
+      y: 750
+      config:
+        inputParams:
+        - key: seg2
+          valueFrom: refer
+        - key: outline
+          valueFrom: refer
+        - key: kb1
+          valueFrom: refer
+        - key: kb3
+          valueFrom: refer
+        - key: kb5
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "【角色设定】\n${LLM_analysis.result}\n\n上文内容（案例1及分析）：\n${LLM_D2.result}\n\n任务：呈现案例2并与案例1形成对比。\n\n案例2大纲要点（取大纲③部分）：\n${LLM_outline.result}\n\n【重要约束】真实案例2（严格基于以下第2条案例内容，不得改编）：\n${Retrieval_KB5.result}\n\n可引用法规（只能引用以下内容）：\n${Retrieval_KB3.result}\n\n合规红线（不得出现以下表述）：\n${Retrieval_KB1.result}\n\n【安全保护机制——不可删除不可修改】\n若案例库第2条内容不足，必须直接输出：\n"【提示】案例2暂无匹配内容，请人工补充真实案例后，重新运行本节点。本节点拒绝生成虚假案例。"\n\n重点要求（仅在案例充足时执行）：\n- 字数：200-250字\n- 对话来回不少于4轮，每轮不超过80字\n- 必须明确说出案例1和案例2的关键差异是什么\n- 让学员一听就懂为什么结果不同\n- 严格遵守合规红线\n\n输出格式（使用角色配置中的实际角色名）：\n角色名：xxx\n角色名：xxx\n...（至少4轮对话）"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手。只基于真实检索到的案例，案例不足时必须输出保护提示语，不得虚构。严格遵守合规红线。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.8
+              temperature: 0.6
+              enable_thinking: true
+              thinking_budget: 2000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # D④：总结警示+栗子精灵片尾（分支D末端，接入合规校验）
+    - id: LLM_D4
+      type: LLM
+      name: D④总结+栗子精灵
+      x: 2900
+      y: 750
+      config:
+        inputParams:
+        - key: outline
+          valueFrom: refer
+        - key: kb1
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "任务：两人总结警示，栗子精灵收尾。\n\n总结大纲要点（取大纲④⑤部分）：\n${LLM_outline.result}\n\n角色设定：\n${LLM_analysis.result}\n\n合规红线（不得出现以下表述）：\n${Retrieval_KB1.result}\n\n本课各段内容参考：\n片头：${LLM_D1.result}\n\n案例1：${LLM_D2.result}\n\n案例2：${LLM_D3.result}\n\n要求：\n两人对话总结：100-120字\n- 一个角色问"我们应该怎么做"\n- 另一个角色给3条具体行动建议\n- 最后一句两人共同确认结论\n\n栗子精灵片尾：70-90字，提炼3个核心记忆点，结尾用有力的警示或鼓励语\n\n输出格式（使用角色配置中的实际角色名）：\n角色名：xxx\n角色名：xxx\n栗子精灵：xxx\n\n严格遵守合规红线，不得使用收益承诺等违规表述。"
+          sysPromptContent: "你是栗子学院AI课程脚本生成助手。写出有力的警示总结，严格遵守合规红线。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.9
+              temperature: 0.7
+              enable_thinking: true
+              thinking_budget: 1500
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # ════════════════════════════════════════
+    # 节点8：合规校验（LLM节点）
+    # 接收4条分支末端输出（仅一条分支有内容）
+    # 同时完成脚本拼合 + 合规审查
+    # ════════════════════════════════════════
+    - id: LLM_compliance
+      type: LLM
+      name: 合规校验
+      x: 3600
+      y: 400
+      config:
+        inputParams:
+        - key: seg_A
+          valueFrom: refer
+        - key: seg_B
+          valueFrom: refer
+        - key: seg_C
+          valueFrom: refer
+        - key: seg_D
+          valueFrom: refer
+        - key: kb1
+          valueFrom: refer
+        outputParams:
+        - key: result
+          type: String
+        nodeParam:
+          promptContent: "你是保险行业合规审核专家，同时负责将分段生成的脚本整合为完整课程稿。\n\n【第一步：脚本整合】\n以下各分支中只有一条分支有内容（其余为空），请识别有效内容并整合为完整脚本：\n\n--- 知识课-旁白型各段（如有）---\n开场白：${LLM_A1.result}\n知识点1：${LLM_A2.result}\n知识点2：${LLM_A3.result}\n知识点3/误区：${LLM_A4.result}\n总结+收尾：${LLM_A5.result}\n\n--- 知识课-对话型各段（如有）---\n片头：${LLM_B1.result}\n对话前段：${LLM_B2.result}\n对话后段：${LLM_B3.result}\n片尾：${LLM_B4.result}\n\n--- 案例课-旁白型各段（如有）---\n悬念开场：${LLM_C1.result}\n案例还原：${LLM_C2.result}\n法律分析：${LLM_C3.result}\n判决结果：${LLM_C4.result}\n实务启示：${LLM_C5.result}\n\n--- 案例课-对话型各段（如有）---\n片头：${LLM_D1.result}\n案例1：${LLM_D2.result}\n案例2：${LLM_D3.result}\n总结+片尾：${LLM_D4.result}\n\n【第二步：合规检查】\n对上述整合后的完整脚本进行逐段合规检查。\n\n合规红线清单：\n${Retrieval_KB1.result}\n\n【输出格式】\n\n=== 完整课程脚本 ===\n（按段落顺序输出整合后的完整脚本，保留原始格式）\n\n=== 合规检查结果 ===\n1. 合规结论：通过 / 不通过\n2. 风险评级：低风险 / 中风险 / 高风险\n3. 问题清单（如有）：\n   - 位置：第X段\n   - 违规表述："具体文字"\n   - 违规类型：收益承诺/夸大保障/误导投保/退保误导/贬低竞品/虚假宣传\n   - 建议修改：替换为"xxx"\n   若无问题，本项输出"无"\n4. 整体评价：1-2句话"
+          sysPromptContent: "你是保险行业合规审核专家。对课程脚本进行严格逐段合规检查，确保内容符合监管要求，不得有任何遗漏。同时完成分段内容的整合拼接。"
+          modelConfig:
+            modelId: qwen3-max-preview
+            params:
+              top_p: 0.8
+              temperature: 0.2
+              enable_thinking: true
+              thinking_budget: 4000
+          shortMemory:
+            enable: false
+          tryCatchConfig:
+            enable: false
+          batchEnable: false
+          contextSwitch: false
+
+    # ════════════════════════════════════════
+    # 节点9：最终输出（End节点）
+    # ════════════════════════════════════════
+    - id: End_main
+      type: End
+      name: 最终输出
+      x: 3950
+      y: 400
+      config:
+        inputParams:
+        - key: answer
+          valueFrom: refer
+        nodeParam:
+          outputKey: answer
+          outputTemplate: "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n【栗子学院课程脚本生成结果】\n课程主题：${Start_main.input_topic}\n课程类型：${Start_main.input_type}\n目标学员：${Start_main.input_audience}\n预计时长：${Start_main.input_duration}\n生成时间：（自动记录）\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n${LLM_compliance.result}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
