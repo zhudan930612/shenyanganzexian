@@ -1,0 +1,61 @@
+name: Daily Doc Sync
+
+on:
+  schedule:
+    # UTC 10:00 = Asia/Shanghai 18:00
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-doc-sync
+  cancel-in-progress: false
+
+jobs:
+  sync-docs:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Shanghai
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Show Trigger Time
+        run: |
+          echo "UTC: $(date -u '+%Y-%m-%d %H:%M:%S')"
+          echo "Asia/Shanghai: $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')"
+
+      - name: Run Doc Sync Hook (Optional)
+        shell: bash
+        run: |
+          if [ -f "scripts/doc-sync.sh" ]; then
+            echo "Found scripts/doc-sync.sh, running..."
+            chmod +x scripts/doc-sync.sh
+            scripts/doc-sync.sh
+          elif [ -f "scripts/doc-sync.ps1" ]; then
+            echo "Found scripts/doc-sync.ps1, running..."
+            pwsh -File scripts/doc-sync.ps1
+          else
+            echo "No doc sync script found. Skip content sync."
+          fi
+
+      - name: Commit And Push If Changed
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          commit_time="$(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M')"
+          git commit -m "docs(sync): ${commit_time} Asia/Shanghai"
+          git push
