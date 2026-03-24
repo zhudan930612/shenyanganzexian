@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>生产安全事故统计分析系统完整产品原型</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --line: #d7e2ee;
+      --text: #1f2937;
+      --muted: #667085;
+      --primary: #1d5fd1;
+      --primary-soft: #eaf2ff;
+      --nav-bg: #f8fbff;
+      --red: #d33f4b;
+      --red-soft: #fff2f3;
+      --orange: #ef8b2c;
+      --orange-soft: #fff3e7;
+      --yellow: #c99b13;
+      --yellow-soft: #fff8dd;
+      --blue: #2f6fdb;
+      --blue-soft: #edf4ff;
+      --green: #1d9f65;
+      --green-soft: #eaf8f1;
+      --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, #eef4ff 0, transparent 28%),
+        linear-gradient(180deg, #f7faff 0%, #f4f7fb 100%);
+    }
+    .app { min-height: 100vh; display: grid; grid-template-columns: 250px 1fr; }
+    .sidebar {
+      background: var(--nav-bg);
+      border-right: 1px solid var(--line);
+      padding: 24px 16px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+    }
+    .brand { font-size: 21px; font-weight: 800; line-height: 1.4; margin-bottom: 28px; }
+    .brand small { display: block; margin-top: 8px; color: var(--muted); font-size: 12px; font-weight: 500; }
+    .nav-title {
+      padding: 0 10px;
+      margin: 18px 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .nav-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: 14px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      text-align: left;
+    }
+    .nav-item.active { background: var(--primary-soft); color: var(--primary); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      padding: 0 8px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #edf2f8;
+      color: var(--muted);
+    }
+    .badge.red { background: var(--red-soft); color: var(--red); }
+    .badge.green { background: var(--green-soft); color: var(--green); }
+    .sidebar-note {
+      margin-top: 18px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #ffffff;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .main { padding: 24px; }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    h1 { margin: 0; font-size: 30px; line-height: 1.3; }
+    .sub { margin-top: 8px; color: var(--muted); font-size: 14px; line-height: 1.7; max-width: 980px; }
+    .toolbar, .tabs, .chips, .filters, .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn, .select, .tab, .chip {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+    }
+    .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .btn.soft { background: var(--primary-soft); border-color: transparent; color: var(--primary); }
+    .tab, .chip {
+      border: 0;
+      background: #edf2f7;
+      color: var(--muted);
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+    .tab.active, .chip.active { background: var(--primary-soft); color: var(--primary); }
+    .hero {
+      margin-bottom: 18px;
+      padding: 18px 20px;
+      border-radius: var(--radius);
+      border: 1px solid #d8e5ff;
+      background: linear-gradient(120deg, #eef4ff 0%, #ffffff 65%);
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+    }
+    .hero strong { display: block; font-size: 18px; margin-bottom: 6px; }
+    .hero p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 18px; }
+    .card, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .card { padding: 18px; }
+    .card .label { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
+    .card .value { font-size: 30px; font-weight: 800; margin-bottom: 6px; }
+    .card .note { color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .view { display: none; }
+    .view.active { display: block; }
+    .panel-header {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .panel-title { margin: 0; font-size: 18px; font-weight: 800; }
+    .muted { color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .panel-body { padding: 18px; }
+    .layout-2 { display: grid; grid-template-columns: 360px 1fr; gap: 18px; }
+    .layout-3 { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 18px; }
+    .stack { display: flex; flex-direction: column; gap: 18px; }
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .item {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+      cursor: pointer;
+    }
+    .item.active { border-color: var(--primary); box-shadow: 0 10px 24px rgba(29, 95, 209, 0.12); }
+    .item-title { font-size: 15px; font-weight: 800; margin-bottom: 6px; }
+    .item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+    .level-tag {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .level-red { background: var(--red-soft); color: var(--red); }
+    .level-orange { background: var(--orange-soft); color: var(--orange); }
+    .level-yellow { background: var(--yellow-soft); color: #8b6f06; }
+    .level-blue { background: var(--blue-soft); color: var(--blue); }
+    .level-green { background: var(--green-soft); color: var(--green); }
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+    .mini {
+      background: #f8fbff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .mini .label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .mini .value { font-size: 18px; font-weight: 800; }
+    .section {
+      padding-bottom: 16px;
+      margin-bottom: 16px;
+      border-bottom: 1px dashed var(--line);
+    }
+    .section:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+    .section h3 { margin: 0 0 8px; font-size: 16px; }
+    .section p, .section li { margin: 0; color: #344054; line-height: 1.8; font-size: 14px; }
+    .section ul { margin: 8px 0 0; padding-left: 18px; }
+    .directory { display: flex; flex-direction: column; gap: 8px; }
+    .directory button {
+      border: 0;
+      background: transparent;
+      text-align: left;
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text);
+      font-weight: 700;
+    }
+    .directory button.active { background: var(--primary-soft); color: var(--primary); }
+    .timeline { display: flex; flex-direction: column; gap: 14px; position: relative; margin-left: 4px; }
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 6px;
+      bottom: 6px;
+      width: 2px;
+      background: #d8e3f2;
+    }
+    .timeline-item { position: relative; padding-left: 34px; }
+    .timeline-item::before {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: 8px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--primary);
+    }
+    .chart {
+      min-height: 180px;
+      border: 1px dashed #b6c7df;
+      border-radius: 14px;
+      background:
+        linear-gradient(180deg, rgba(234, 242, 255, 0.68) 0%, rgba(255,255,255,0.95) 100%),
+        repeating-linear-gradient(to right, transparent 0 70px, rgba(182,199,223,0.18) 70px 71px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #5c6f8a;
+      font-weight: 700;
+      text-align: center;
+      padding: 20px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 13px 14px;
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    th { background: #f8fbff; color: var(--muted); font-weight: 700; }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.44);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 20;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal {
+      width: min(760px, 100%);
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24);
+    }
+    .modal-header, .modal-footer {
+      padding: 16px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .modal-footer {
+      border-bottom: 0;
+      border-top: 1px solid var(--line);
+      justify-content: flex-end;
+    }
+    .modal-body { padding: 18px; }
+    .textarea {
+      width: 100%;
+      min-height: 160px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font: inherit;
+      line-height: 1.7;
+      resize: vertical;
+    }
+    .close {
+      border: 0;
+      background: transparent;
+      font-size: 22px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+    .helper { margin-top: 10px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .footer-note {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
+      background: rgba(255, 255, 255, 0.65);
+    }
+    @media (max-width: 1360px) {
+      .cards, .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .layout-2, .layout-3 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 960px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; }
+      .cards, .stat-grid { grid-template-columns: 1fr; }
+      .topbar, .hero { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        生产安全事故统计分析系统
+        <small>完整系统 HTML 原型 · 沈阳版</small>
+      </div>
+      <div class="nav-title">系统导航</div>
+      <button class="nav-item active app-tab" data-view="dashboard"><span>首页工作台</span><span class="badge green">主</span></button>
+      <button class="nav-item app-tab" data-view="report"><span>统计分析报告</span><span class="badge">3</span></button>
+      <button class="nav-item app-tab" data-view="warning"><span>事故风险预警</span><span class="badge red">3</span></button>
+      <button class="nav-item app-tab" data-view="query"><span>数据查询门户</span></button>
+      <button class="nav-item app-tab" data-view="governance"><span>数据接入与治理</span></button>
+      <button class="nav-item app-tab" data-view="admin"><span>系统管理</span></button>
+      <div class="nav-title">角色视角</div>
+      <button class="nav-item"><span>工作人员主视角</span><span class="badge green">当前</span></button>
+      <button class="nav-item"><span>领导只读视角</span></button>
+      <button class="nav-item"><span>管理员运维视角</span></button>
+      <div class="sidebar-note">
+        这个原型是整套系统串起来的版本，不是单页截图。
+        <br />
+        你可以从左侧切模块看信息架构，也可以直接拿它继续细化成下一轮高保真原型。
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1>生产安全事故统计分析与智能预警系统</h1>
+          <div class="sub">
+            基于你当前文档整理出的完整系统原型，覆盖首页工作台、统计分析报告、事故风险预警、外部数据查询、数据接入治理、系统管理六大部分。
+          </div>
+        </div>
+        <div class="toolbar">
+          <button class="btn">刷新数据</button>
+          <button class="btn soft">切换领导视图</button>
+          <button class="btn primary" data-open="global">模拟关键操作</button>
+        </div>
+      </div>
+
+      <section class="view active" id="dashboard">
+        <div class="hero">
+          <div>
+            <strong>今天的系统重点</strong>
+            <p>建筑施工行业出现红色预警 1 条；当日同步任务已完成；月度简报草稿已生成，待工作人员确认导出。</p>
+          </div>
+          <div class="chips">
+            <span class="chip active">今日重点监控</span>
+            <span class="chip">待办 4 项</span>
+            <span class="chip">领导已读 2 份</span>
+          </div>
+        </div>
+
+        <div class="cards">
+          <div class="card"><div class="label">本月事故起数</div><div class="value">42</div><div class="note">同比上升 12%，环比上升 3%</div></div>
+          <div class="card"><div class="label">待处置预警</div><div class="value">3</div><div class="note">红色 1 条，橙色 1 条，黄色 1 条</div></div>
+          <div class="card"><div class="label">今日同步状态</div><div class="value">成功</div><div class="note">02:03 完成，新增 12 条，补录 0 条</div></div>
+          <div class="card"><div class="label">最新报告</div><div class="value" style="font-size:22px;">3 月月度简报</div><div class="note">09:40 生成，待确认导出</div></div>
+        </div>
+
+        <div class="layout-3">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title">今日待办</h2>
+                <div class="muted">面向事故调查科工作人员的任务清单</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="list">
+                <div class="item active">
+                  <div class="item-top"><div class="item-title">确认建筑施工行业红色预警</div><span class="level-tag level-red">高优先级</span></div>
+                  <div class="muted">建议 2 小时内登记处置措施，并推送至行业主管处室。</div>
+                </div>
+                <div class="item">
+                  <div class="item-top"><div class="item-title">审核 2026 年 3 月月度简报</div><span class="level-tag level-blue">待导出</span></div>
+                  <div class="muted">图表已生成，目录完整，待确认文字口径。</div>
+                </div>
+                <div class="item">
+                  <div class="item-top"><div class="item-title">复核 1 条异常清洗记录</div><span class="level-tag level-yellow">待核查</span></div>
+                  <div class="muted">死亡人数字段异常偏高，需要人工核验原始记录。</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title">核心趋势看板</h2>
+                <div class="muted">首页只放最常用的趋势摘要，便于快速判断态势</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="chart">事故总量趋势图占位<br />支持同比、环比、异常点标注</div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title">系统运行概况</h2>
+                <div class="muted">让管理员和业务侧都能一眼看出系统是否正常</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="timeline">
+                <div class="timeline-item">
+                  <div class="item-title">02:03 自动同步完成</div>
+                  <div class="muted">拉取前一日新增和变更事故 12 条，全部入库成功。</div>
+                </div>
+                <div class="timeline-item">
+                  <div class="item-title">02:12 预警任务执行</div>
+                  <div class="muted">趋势模型与相似度模型完成计算，生成 1 条红色预警。</div>
+                </div>
+                <div class="timeline-item">
+                  <div class="item-title">09:40 月报草稿生成</div>
+                  <div class="muted">已输出图表和 AI 文字解读，等待人工确认后导出。</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="report">
+        <div class="hero">
+          <div>
+            <strong>统计分析报告模块</strong>
+            <p>支持月度简报、季度深度分析报告、年度白皮书三类模板，工作人员可生成、预览、下钻、导出和分发。</p>
+          </div>
+          <div class="toolbar">
+            <button class="btn">重新生成</button>
+            <button class="btn">导出 Word</button>
+            <button class="btn primary">发送邮件</button>
+          </div>
+        </div>
+
+        <div class="layout-2">
+          <div class="stack">
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2 class="panel-title">报告配置</h2>
+                  <div class="muted">左侧做成固定配置区，方便重复使用</div>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="section">
+                  <h3>模板选择</h3>
+                  <div class="chips">
+                    <span class="chip active">月度简报</span>
+                    <span class="chip">季度深度分析</span>
+                    <span class="chip">年度白皮书</span>
+                  </div>
+                </div>
+                <div class="section">
+                  <h3>统计周期</h3>
+                  <div class="filters">
+                    <button class="select">2026 年</button>
+                    <button class="select">3 月</button>
+                    <button class="select">同比已开启</button>
+                    <button class="select">环比已开启</button>
+                  </div>
+                </div>
+                <div class="section">
+                  <h3>最近生成的报告</h3>
+                  <div class="list">
+                    <div class="item active">
+                      <div class="item-title">2026 年 3 月月度简报</div>
+                      <div class="muted">03-18 09:40 生成 · 状态：待导出</div>
+                    </div>
+                    <div class="item">
+                      <div class="item-title">2026 年 Q1 季度深度分析报告</div>
+                      <div class="muted">03-10 16:20 生成 · 状态：已归档</div>
+                    </div>
+                    <div class="item">
+                      <div class="item-title">2025 年年度白皮书</div>
+                      <div class="muted">01-18 10:15 生成 · 状态：已分发</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="actions">
+                  <button class="btn primary">生成报告</button>
+                  <button class="btn">查看历史版本</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2 class="panel-title">导出与分发</h2>
+                  <div class="muted">高频动作集中在一起，方便后面继续扩展</div>
+                </div>
+              </div>
+              <div class="panel-body">
+                <table>
+                  <thead>
+                    <tr><th>动作</th><th>说明</th><th>建议入口</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>导出 Word</td><td>供正式发文和继续修改排版使用</td><td>报告页头部主按钮</td></tr>
+                    <tr><td>导出 PDF</td><td>供归档和邮件分发使用</td><td>导出下拉菜单</td></tr>
+                    <tr><td>发送邮件</td><td>按预设收件人分发到领导和相关处室</td><td>报告页头部主按钮</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title">报告预览</h2>
+                <div class="muted">右侧用目录 + 报告内容的方式，贴近正式阅读场景</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="layout-2" style="grid-template-columns:220px 1fr;">
+                <div>
+                  <div class="directory">
+                    <button class="active">一、总体情况</button>
+                    <button>二、重点行业领域情况</button>
+                    <button>三、区域分布分析</button>
+                    <button>四、主要特点</button>
+                    <button>五、工作建议</button>
+                  </div>
+                </div>
+                <div>
+                  <div class="section">
+                    <h3>一、总体情况</h3>
+                    <p>本月全市共发生生产安全事故 42 起，死亡 18 人，重伤 27 人。与去年同期相比，事故起数上升 12%，死亡人数上升 6%，事故总量整体呈轻度抬升态势。</p>
+                  </div>
+                  <div class="section">
+                    <h3>核心指标卡</h3>
+                    <div class="stat-grid">
+                      <div class="mini"><div class="label">事故起数</div><div class="value">42</div></div>
+                      <div class="mini"><div class="label">死亡人数</div><div class="value">18</div></div>
+                      <div class="mini"><div class="label">同比变化</div><div class="value">+12%</div></div>
+                      <div class="mini"><div class="label">环比变化</div><div class="value">+3%</div></div>
+                    </div>
+                  </div>
+                  <div class="section">
+                    <h3>趋势图与 AI 解读</h3>
+                    <div class="chart">月度趋势图占位<br />支持异常点标注与点击下钻</div>
+                    <p style="margin-top:10px;">AI 解读：本月事故总量较去年同期上升，主要受建筑施工领域事故增加影响，需重点关注高处坠落、物体打击类风险。</p>
+                  </div>
+                  <div class="section">
+                    <h3>下钻入口</h3>
+                    <div class="chips">
+                      <span class="chip active">建筑施工</span>
+                      <span class="chip">道路运输</span>
+                      <span class="chip">铁西区</span>
+                      <span class="chip">浑南区</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="warning">
+        <div class="hero">
+          <div>
+            <strong>事故风险预警模块</strong>
+            <p>基于趋势外推法、相似度匹配法和因素关联法的组合思路，统一输出风险分值、预警等级、原因解释和处置动作。</p>
+          </div>
+          <div class="toolbar">
+            <button class="btn">刷新预警</button>
+            <button class="btn">进入规则配置</button>
+            <button class="btn primary" data-open="dispose">模拟处置</button>
+          </div>
+        </div>
+
+        <div class="cards">
+          <div class="card"><div class="label">待处置预警</div><div class="value">3</div><div class="note">当前有 1 条红色预警需优先处理</div></div>
+          <div class="card"><div class="label">本月已处置</div><div class="value">12</div><div class="note">比上月增加 20%</div></div>
+          <div class="card"><div class="label">高风险对象</div><div class="value">2</div><div class="note">建筑施工、铁西区</div></div>
+          <div class="card"><div class="label">误报率</div><div class="value">8%</div><div class="note">用于后续阈值和模型优化</div></div>
+        </div>
+
+        <div class="layout-2">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title">预警列表</h2>
+                <div class="muted">红色置顶，支持按维度、等级、状态筛选</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="list" id="warning-list">
+                <div class="item active" data-warning="construction">
+                  <div class="item-top">
+                    <div>
+                      <div class="item-title">建筑施工行业预警</div>
+                      <div class="muted">2026-03-18 06:00 · 待处置</div>
+                    </div>
+                    <span class="level-tag level-red">红色</span>
+                  </div>
+                  <div class="muted">行业维度 · 风险分值 92</div>
+                </div>
+                <div class="item" data-warning="district">
+                  <div class="item-top">
+                    <div>
+                      <div class="item-title">铁西区区域预警</div>
+                      <div class="muted">2026-03-17 06:00 · 待处置</div>
+                    </div>
+                    <span class="level-tag level-orange">橙色</span>
+                  </div>
+                  <div class="muted">区域维度 · 风险分值 84</div>
+                </div>
+                <div class="item" data-warning="city">
+                  <div class="item-top">
+                    <div>
+                      <div class="item-title">全市总量周度预警</div>
+                      <div class="muted">2026-03-16 06:00 · 待处置</div>
+                    </div>
+                    <span class="level-tag level-yellow">黄色</span>
+                  </div>
+                  <div class="muted">总量维度 · 风险分值 72</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title" id="warning-title">红色预警 · 建筑施工行业</h2>
+                <div class="muted" id="warning-sub">生成时间：2026-03-18 06:00</div>
+              </div>
+              <div class="actions">
+                <button class="btn">历史记录</button>
+                <button class="btn primary" data-open="dispose">登记措施</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="stat-grid">
+                <div class="mini"><div class="label">预警维度</div><div class="value" id="w-dimension">行业预警</div></div>
+                <div class="mini"><div class="label">风险分值</div><div class="value" id="w-score">92</div></div>
+                <div class="mini"><div class="label">预测窗口</div><div class="value" id="w-window">未来 30 天</div></div>
+                <div class="mini"><div class="label">当前状态</div><div class="value" id="w-status">待处置</div></div>
+              </div>
+              <div class="section">
+                <h3>触发原因</h3>
+                <p id="w-reason">近 30 天建筑施工事故 8 起，高于近 3 年同期均值 4 起，偏高 100%，已超过红色阈值。</p>
+              </div>
+              <div class="section">
+                <h3>模型解释</h3>
+                <ul id="w-explain">
+                  <li>趋势外推法判断近期事故数持续上升。</li>
+                  <li>相似度模型匹配到去年同期相似风险窗口。</li>
+                  <li>天气与节后复工因素对高处坠落风险有放大作用。</li>
+                </ul>
+              </div>
+              <div class="section">
+                <h3>建议动作</h3>
+                <ul id="w-actions">
+                  <li>立即通知建筑施工主管处室开展专项检查。</li>
+                  <li>重点关注高处坠落、物体打击和临边防护问题。</li>
+                  <li>要求重点企业 24 小时内反馈整改措施。</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="query">
+        <div class="hero">
+          <div>
+            <strong>外部部门数据查询门户</strong>
+            <p>面向交通局、消防、公安等外部部门的独立查询界面，只展示授权范围内的数据，不提供内部报告和预警入口。</p>
+          </div>
+          <div class="chips">
+            <span class="chip active">外部部门风格</span>
+            <span class="chip">严格权限隔离</span>
+          </div>
+        </div>
+
+        <div class="layout-2">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title">查询条件</h2>
+                <div class="muted">查询项只显示当前外部账号有权限看的范围</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="section">
+                <h3>当前登录身份</h3>
+                <p>交通局 · 交通安全科 · 账号：jt001</p>
+              </div>
+              <div class="section">
+                <h3>时间范围</h3>
+                <div class="filters">
+                  <button class="select">2026 年 1 月</button>
+                  <button class="select">至 2026 年 3 月</button>
+                </div>
+              </div>
+              <div class="section">
+                <h3>事故类型</h3>
+                <div class="chips">
+                  <span class="chip active">道路运输</span>
+                  <span class="chip">其他类型不可见</span>
+                </div>
+              </div>
+              <div class="section">
+                <h3>区域范围</h3>
+                <div class="chips">
+                  <span class="chip active">全市范围</span>
+                  <span class="chip">可切换指定区县</span>
+                </div>
+              </div>
+              <div class="actions">
+                <button class="btn primary">查询</button>
+                <button class="btn">重置</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2 class="panel-title">查询结果</h2>
+                  <div class="muted">只展示聚合数据，不展示敏感的单事故明细</div>
+                </div>
+                <div class="actions">
+                  <button class="btn">导出 Excel</button>
+                  <button class="btn">导出 PDF</button>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="stat-grid">
+                  <div class="mini"><div class="label">总起数</div><div class="value">12</div></div>
+                  <div class="mini"><div class="label">死亡人数</div><div class="value">6</div></div>
+                  <div class="mini"><div class="label">重伤人数</div><div class="value">9</div></div>
+                  <div class="mini"><div class="label">主要区域</div><div class="value">铁西区</div></div>
+                </div>
+                <div class="layout-2">
+                  <div class="chart">月度趋势折线图占位</div>
+                  <div class="chart">区域分布柱状图占位</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2 class="panel-title">聚合明细表</h2>
+                  <div class="muted">按月份和区域汇总，便于外部部门拿来做本部门判断</div>
+                </div>
+              </div>
+              <div class="panel-body">
+                <table>
+                  <thead>
+                    <tr><th>月份</th><th>事故起数</th><th>死亡人数</th><th>重伤人数</th><th>主要区域</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>2026-01</td><td>4</td><td>2</td><td>3</td><td>铁西区、于洪区</td></tr>
+                    <tr><td>2026-02</td><td>3</td><td>1</td><td>2</td><td>沈河区</td></tr>
+                    <tr><td>2026-03</td><td>5</td><td>3</td><td>4</td><td>大东区、铁西区</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="governance">
+        <div class="hero">
+          <div>
+            <strong>数据接入与治理模块</strong>
+            <p>负责每日自动同步、失败告警、手工补录、数据清洗和质量核查，是整套系统的数据底座。</p>
+          </div>
+          <div class="tabs">
+            <button class="tab active">同步监控</button>
+            <button class="tab">数据质量</button>
+          </div>
+        </div>
+
+        <div class="cards">
+          <div class="card"><div class="label">最近一次同步</div><div class="value">成功</div><div class="note">2026-03-18 02:03 完成</div></div>
+          <div class="card"><div class="label">本月成功率</div><div class="value">97.8%</div><div class="note">45 次成功，1 次失败</div></div>
+          <div class="card"><div class="label">今日入库数</div><div class="value">12</div><div class="note">全部已完成标准化处理</div></div>
+          <div class="card"><div class="label">待核查记录</div><div class="value">1</div><div class="note">需要人工确认原始数据口径</div></div>
+        </div>
+
+        <div class="layout-2">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title">同步记录</h2>
+                <div class="muted">按时间倒序展示自动同步和手工补录结果</div>
+              </div>
+              <div class="actions">
+                <button class="btn">手工补录</button>
+                <button class="btn primary">手动触发同步</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <table>
+                <thead>
+                  <tr><th>同步时间</th><th>触发方式</th><th>状态</th><th>数量</th><th>备注</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>2026-03-18 02:03</td><td>自动</td><td><span class="level-tag level-green">成功</span></td><td>12</td><td>正常入库</td></tr>
+                  <tr><td>2026-03-17 02:01</td><td>自动</td><td><span class="level-tag level-green">成功</span></td><td>5</td><td>正常入库</td></tr>
+                  <tr><td>2026-03-14 02:05</td><td>自动</td><td><span class="level-tag level-red">失败</span></td><td>0</td><td>直报系统接口超时</td></tr>
+                  <tr><td>2026-03-14 09:22</td><td>手工补录</td><td><span class="level-tag level-blue">补录</span></td><td>5</td><td>补录 3 月 14 日数据</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2 class="panel-title">数据质量报告</h2>
+                  <div class="muted">面向管理员的每日清洗结果总览</div>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="stat-grid">
+                  <div class="mini"><div class="label">入库数据</div><div class="value">12</div></div>
+                  <div class="mini"><div class="label">自动补全</div><div class="value">3</div></div>
+                  <div class="mini"><div class="label">重复处理</div><div class="value">1</div></div>
+                  <div class="mini"><div class="label">待核查</div><div class="value">1</div></div>
+                </div>
+                <div class="chart">数据质量趋势图占位<br />可展示近 30 天同步成功率和异常量</div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2 class="panel-title">待核查记录</h2>
+                  <div class="muted">异常值不会阻塞入库，但需要在这里复核</div>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="item active">
+                  <div class="item-top">
+                    <div>
+                      <div class="item-title">事故编号 SY20260315-001</div>
+                      <div class="muted">异常字段：死亡人数 = 35</div>
+                    </div>
+                    <span class="level-tag level-yellow">待核查</span>
+                  </div>
+                  <div class="muted">原因：超过特别重大事故阈值，需要人工对照原始记录确认。</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="admin">
+        <div class="hero">
+          <div>
+            <strong>系统管理模块</strong>
+            <p>负责内部用户和外部部门用户账号管理、数据权限配置、操作日志审计，满足政务系统合规要求。</p>
+          </div>
+          <div class="tabs" id="admin-tabs">
+            <button class="tab active admin-tab" data-admin="users">用户管理</button>
+            <button class="tab admin-tab" data-admin="logs">操作日志</button>
+          </div>
+        </div>
+
+        <div class="admin-view active" id="users">
+          <div class="layout-2">
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2 class="panel-title">用户列表</h2>
+                  <div class="muted">内部用户和外部部门用户统一管理，外部用户有额外数据权限配置</div>
+                </div>
+                <button class="btn primary">新建用户</button>
+              </div>
+              <div class="panel-body">
+                <div class="tabs" style="margin-bottom:12px;">
+                  <button class="tab active">全部用户</button>
+                  <button class="tab">内部用户</button>
+                  <button class="tab">外部部门用户</button>
+                </div>
+                <div class="list" id="user-list">
+                  <div class="item active" data-user="internal">
+                    <div class="item-top">
+                      <div>
+                        <div class="item-title">张三</div>
+                        <div class="muted">账号：zs001 · 事故调查科工作人员</div>
+                      </div>
+                      <span class="level-tag level-green">启用</span>
+                    </div>
+                    <div class="muted">内部用户</div>
+                  </div>
+                  <div class="item" data-user="external">
+                    <div class="item-top">
+                      <div>
+                        <div class="item-title">王五</div>
+                        <div class="muted">账号：jt001 · 交通局交通安全科</div>
+                      </div>
+                      <span class="level-tag level-green">启用</span>
+                    </div>
+                    <div class="muted">外部部门用户</div>
+                  </div>
+                  <div class="item">
+                    <div class="item-top">
+                      <div>
+                        <div class="item-title">李四</div>
+                        <div class="muted">账号：ld001 · 局领导</div>
+                      </div>
+                      <span class="level-tag level-green">启用</span>
+                    </div>
+                    <div class="muted">内部用户</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2 class="panel-title" id="user-title">用户详情 · 张三</h2>
+                  <div class="muted" id="user-sub">内部用户 · 事故调查科工作人员</div>
+                </div>
+                <div class="actions">
+                  <button class="btn">重置密码</button>
+                  <button class="btn">停用账号</button>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="section">
+                  <h3>基础信息</h3>
+                  <table>
+                    <tbody>
+                      <tr><th style="width:160px;">账号</th><td id="u-account">zs001</td></tr>
+                      <tr><th>所属部门</th><td id="u-dept">事故调查科</td></tr>
+                      <tr><th>角色</th><td id="u-role">事故调查科工作人员</td></tr>
+                      <tr><th>状态</th><td id="u-status">启用</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="section" id="user-permission-section" style="display:none;">
+                  <h3>数据权限配置</h3>
+                  <table>
+                    <tbody>
+                      <tr><th style="width:160px;">可查询事故类型</th><td>道路运输</td></tr>
+                      <tr><th>可查询区域范围</th><td>全市</td></tr>
+                      <tr><th>是否允许导出</th><td>允许</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="section">
+                  <h3>操作入口</h3>
+                  <div class="actions">
+                    <button class="btn primary">保存权限</button>
+                    <button class="btn">修改角色</button>
+                    <button class="btn">查看日志</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-view" id="logs" style="display:none;">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title">操作日志审计</h2>
+                <div class="muted">记录登录、报告生成、预警处置、数据导出、权限修改等关键操作</div>
+              </div>
+              <div class="actions">
+                <button class="btn">导出 Excel</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="filters" style="margin-bottom:12px;">
+                <button class="select">2026-03-01 至 2026-03-18</button>
+                <button class="select">全部用户</button>
+                <button class="select">全部操作类型</button>
+                <button class="btn primary">查询</button>
+              </div>
+              <table>
+                <thead>
+                  <tr><th>操作时间</th><th>用户</th><th>操作类型</th><th>操作内容</th><th>IP</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>2026-03-18 09:40:21</td><td>张三</td><td>报告生成</td><td>生成 2026 年 3 月月度简报</td><td>192.168.1.12</td></tr>
+                  <tr><td>2026-03-18 09:55:03</td><td>张三</td><td>报告导出</td><td>导出 Word：2026 年 3 月月度简报</td><td>192.168.1.12</td></tr>
+                  <tr><td>2026-03-18 10:16:44</td><td>管理员</td><td>权限修改</td><td>更新王五的数据查询权限</td><td>192.168.1.3</td></tr>
+                  <tr><td>2026-03-18 11:05:30</td><td>张三</td><td>预警处置</td><td>登记建筑施工行业红色预警处置措施</td><td>192.168.1.12</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="footer-note">
+        原型说明：这个文件重点是把“完整系统长什么样、各模块之间怎么串、页面怎么分层”先搭出来。
+        下一轮如果你觉得方向对，可以继续细化成多页面原型、补完整筛选交互、补图表高保真样式，或者直接拆成前端静态项目。
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <div class="panel-title" id="modal-title">模拟关键操作</div>
+          <div class="muted" id="modal-sub">这里用来示意处置、登记和系统动作弹窗。</div>
+        </div>
+        <button class="close" id="close-modal">×</button>
+      </div>
+      <div class="modal-body">
+        <textarea class="textarea" id="modal-text">请在这里填写处置措施、误报原因或系统备注。例如：已通知建筑施工主管处室开展专项检查，要求重点企业 24 小时内反馈整改情况。</textarea>
+        <div class="helper">原型里把多种弹窗合并成一个通用样式，后面继续深化时可以拆成“处置”“误报”“忽略”“邮件发送”等独立弹窗。</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="cancel-modal">取消</button>
+        <button class="btn primary">确认提交</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const appTabs = document.querySelectorAll(".app-tab");
+    const views = document.querySelectorAll(".view");
+    appTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        appTabs.forEach((item) => item.classList.remove("active"));
+        views.forEach((view) => view.classList.remove("active"));
+        tab.classList.add("active");
+        document.getElementById(tab.dataset.view).classList.add("active");
+      });
+    });
+
+    const warningData = {
+      construction: {
+        title: "红色预警 · 建筑施工行业",
+        sub: "生成时间：2026-03-18 06:00",
+        dimension: "行业预警",
+        score: "92",
+        window: "未来 30 天",
+        status: "待处置",
+        reason: "近 30 天建筑施工事故 8 起，高于近 3 年同期均值 4 起，偏高 100%，已超过红色阈值。",
+        explain: [
+          "趋势外推法判断近期事故数持续上升。",
+          "相似度模型匹配到去年同期相似风险窗口。",
+          "天气与节后复工因素对高处坠落风险有放大作用。"
+        ],
+        actions: [
+          "立即通知建筑施工主管处室开展专项检查。",
+          "重点关注高处坠落、物体打击和临边防护问题。",
+          "要求重点企业 24 小时内反馈整改措施。"
+        ]
+      },
+      district: {
+        title: "橙色预警 · 铁西区",
+        sub: "生成时间：2026-03-17 06:00",
+        dimension: "区域预警",
+        score: "84",
+        window: "未来 30 天",
+        status: "待处置",
+        reason: "铁西区近 4 周事故数连续上升，道路运输和建筑施工占比同时抬升，达到橙色阈值。",
+        explain: [
+          "相似度匹配法识别到与 2024 年 9 月相似的历史窗口。",
+          "趋势模型显示区域事故增幅高于全市平均水平。",
+          "重点行业在该区域集中度较高。"
+        ],
+        actions: [
+          "提醒属地部门重点排查道路运输和施工交叉风险。",
+          "加强重点街道和重点工地巡查频次。",
+          "必要时形成专项提醒函。"
+        ]
+      },
+      city: {
+        title: "黄色预警 · 全市总量",
+        sub: "生成时间：2026-03-16 06:00",
+        dimension: "总量预警",
+        score: "72",
+        window: "未来 7 天",
+        status: "待处置",
+        reason: "本周事故总量较近 3 年同期均值偏高，已达到黄色阈值，但尚未形成高等级集中风险。",
+        explain: [
+          "趋势模型显示未来 7 天事故总量轻度抬升。",
+          "相似度模型结果与基线接近，说明当前风险仍可控。",
+          "建议继续观察，不宜立即升高处置级别。"
+        ],
+        actions: [
+          "保持持续监控。",
+          "结合行业和区域预警结果综合研判。",
+          "若连续两次计算升高，再升级提醒。"
+        ]
+      }
+    };
+
+    const warningList = document.querySelectorAll("#warning-list .item");
+    const warningTitle = document.getElementById("warning-title");
+    const warningSub = document.getElementById("warning-sub");
+    const wDimension = document.getElementById("w-dimension");
+    const wScore = document.getElementById("w-score");
+    const wWindow = document.getElementById("w-window");
+    const wStatus = document.getElementById("w-status");
+    const wReason = document.getElementById("w-reason");
+    const wExplain = document.getElementById("w-explain");
+    const wActions = document.getElementById("w-actions");
+
+    warningList.forEach((item) => {
+      item.addEventListener("click", () => {
+        warningList.forEach((node) => node.classList.remove("active"));
+        item.classList.add("active");
+        const data = warningData[item.dataset.warning];
+        warningTitle.textContent = data.title;
+        warningSub.textContent = data.sub;
+        wDimension.textContent = data.dimension;
+        wScore.textContent = data.score;
+        wWindow.textContent = data.window;
+        wStatus.textContent = data.status;
+        wReason.textContent = data.reason;
+        wExplain.innerHTML = data.explain.map((text) => `<li>${text}</li>`).join("");
+        wActions.innerHTML = data.actions.map((text) => `<li>${text}</li>`).join("");
+      });
+    });
+
+    const userData = {
+      internal: {
+        title: "用户详情 · 张三",
+        sub: "内部用户 · 事故调查科工作人员",
+        account: "zs001",
+        dept: "事故调查科",
+        role: "事故调查科工作人员",
+        status: "启用",
+        showPermission: false
+      },
+      external: {
+        title: "用户详情 · 王五",
+        sub: "外部用户 · 交通局交通安全科",
+        account: "jt001",
+        dept: "交通局交通安全科",
+        role: "外部部门用户",
+        status: "启用",
+        showPermission: true
+      }
+    };
+
+    const userList = document.querySelectorAll("#user-list .item");
+    const userTitle = document.getElementById("user-title");
+    const userSub = document.getElementById("user-sub");
+    const uAccount = document.getElementById("u-account");
+    const uDept = document.getElementById("u-dept");
+    const uRole = document.getElementById("u-role");
+    const uStatus = document.getElementById("u-status");
+    const permissionSection = document.getElementById("user-permission-section");
+
+    userList.forEach((item) => {
+      item.addEventListener("click", () => {
+        userList.forEach((node) => node.classList.remove("active"));
+        item.classList.add("active");
+        const key = item.dataset.user;
+        if (!key) return;
+        const data = userData[key];
+        userTitle.textContent = data.title;
+        userSub.textContent = data.sub;
+        uAccount.textContent = data.account;
+        uDept.textContent = data.dept;
+        uRole.textContent = data.role;
+        uStatus.textContent = data.status;
+        permissionSection.style.display = data.showPermission ? "block" : "none";
+      });
+    });
+
+    const adminTabs = document.querySelectorAll(".admin-tab");
+    const adminViews = document.querySelectorAll(".admin-view");
+    adminTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        adminTabs.forEach((node) => node.classList.remove("active"));
+        adminViews.forEach((node) => {
+          node.classList.remove("active");
+          node.style.display = "none";
+        });
+        tab.classList.add("active");
+        const target = document.getElementById(tab.dataset.admin);
+        target.classList.add("active");
+        target.style.display = "block";
+      });
+    });
+
+    const modal = document.getElementById("modal");
+    const modalTitle = document.getElementById("modal-title");
+    const modalSub = document.getElementById("modal-sub");
+    const modalOpeners = document.querySelectorAll("[data-open]");
+    const closeModal = document.getElementById("close-modal");
+    const cancelModal = document.getElementById("cancel-modal");
+
+    modalOpeners.forEach((button) => {
+      button.addEventListener("click", () => {
+        const kind = button.dataset.open;
+        if (kind === "dispose") {
+          modalTitle.textContent = "预警处置登记";
+          modalSub.textContent = "用于模拟工作人员登记红色或橙色预警的处置动作。";
+        } else {
+          modalTitle.textContent = "系统操作弹窗";
+          modalSub.textContent = "这里可替换为邮件发送、重新生成或系统确认等动作。";
+        }
+        modal.classList.add("show");
+      });
+    });
+
+    function hideModal() {
+      modal.classList.remove("show");
+    }
+
+    closeModal.addEventListener("click", hideModal);
+    cancelModal.addEventListener("click", hideModal);
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) hideModal();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>事故风险预警模块产品原型</title>
+  <style>
+    :root {
+      --bg:#f5f8fc; --panel:#fff; --line:#d9e3ef; --text:#1f2937; --muted:#6b7280;
+      --primary:#2f6fdb; --primary-soft:#eaf1ff; --red:#d93a49; --red-soft:#fff1f2;
+      --orange:#f08c2e; --orange-soft:#fff4e8; --yellow:#d9b21f; --yellow-soft:#fff9df;
+      --blue:#2f6fdb; --blue-soft:#eef4ff; --green:#1f9d63; --shadow:0 12px 32px rgba(31,42,55,.08);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; color:var(--text); background:var(--bg); }
+    .app { min-height:100vh; display:grid; grid-template-columns:240px 1fr; }
+    .sidebar { background:#f8fbff; border-right:1px solid var(--line); padding:24px 16px; }
+    .brand { font-size:20px; font-weight:700; line-height:1.35; margin-bottom:28px; }
+    .brand small { display:block; color:var(--muted); font-size:12px; margin-top:6px; }
+    .nav-title { color:var(--muted); font-size:12px; padding:0 10px; margin:18px 0 8px; text-transform:uppercase; letter-spacing:.08em; }
+    .nav-item { width:100%; border:0; background:transparent; text-align:left; padding:12px 14px; border-radius:12px; margin-bottom:6px; cursor:pointer; font-size:14px; font-weight:600; color:var(--text); display:flex; justify-content:space-between; align-items:center; }
+    .nav-item.active { background:var(--primary-soft); color:var(--primary); }
+    .badge { padding:2px 8px; border-radius:999px; font-size:12px; background:#edf1f7; color:var(--muted); }
+    .badge.red { background:var(--red-soft); color:var(--red); }
+    .main { padding:24px; }
+    .topbar { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:20px; }
+    h1 { margin:0; font-size:28px; }
+    .sub { margin-top:8px; color:var(--muted); font-size:14px; }
+    .toolbar { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn, .select, .tab { border:1px solid var(--line); background:#fff; color:var(--text); border-radius:12px; padding:10px 14px; cursor:pointer; font-size:14px; }
+    .btn.primary { background:var(--primary); border-color:var(--primary); color:#fff; }
+    .view { display:none; }
+    .view.active { display:block; }
+    .cards { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:18px; }
+    .card, .panel { background:var(--panel); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); }
+    .card { padding:18px; }
+    .card .label { color:var(--muted); font-size:13px; margin-bottom:10px; }
+    .card .value { font-size:30px; font-weight:700; margin-bottom:6px; }
+    .card .note { color:var(--muted); font-size:13px; }
+    .headline { background:linear-gradient(90deg,#fff5f6 0%,#fff 100%); border:1px solid #ffd9dd; border-radius:14px; color:var(--red); padding:14px 16px; font-weight:600; margin-bottom:18px; display:flex; justify-content:space-between; gap:12px; align-items:center; }
+    .workspace { display:grid; grid-template-columns:400px 1fr; gap:18px; }
+    .panel-header { padding:16px 18px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .panel-title { margin:0; font-size:18px; font-weight:700; }
+    .muted { color:var(--muted); font-size:13px; }
+    .tabs, .filters, .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .tab { border:0; background:#eef2f7; color:var(--muted); padding:8px 12px; border-radius:999px; font-size:13px; font-weight:600; }
+    .tab.active { background:var(--primary-soft); color:var(--primary); }
+    .warning-list { padding:12px; display:flex; flex-direction:column; gap:10px; max-height:720px; overflow:auto; }
+    .warning-item { border:1px solid var(--line); border-radius:14px; padding:14px; cursor:pointer; background:#fff; }
+    .warning-item.active { border-color:var(--primary); box-shadow:0 8px 20px rgba(47,111,219,.12); }
+    .warning-item.red { background:linear-gradient(180deg,#fff5f6 0%,#fff 100%); }
+    .warning-top { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:8px; }
+    .warning-name { font-size:15px; font-weight:700; margin-bottom:4px; }
+    .level-tag { display:inline-flex; align-items:center; border-radius:999px; padding:6px 10px; font-size:12px; font-weight:700; }
+    .level-red { background:var(--red-soft); color:var(--red); }
+    .level-orange { background:var(--orange-soft); color:var(--orange); }
+    .level-yellow { background:var(--yellow-soft); color:#9a7d08; }
+    .level-blue { background:var(--blue-soft); color:var(--blue); }
+    .score { font-size:13px; font-weight:700; }
+    .detail-body { padding:18px; }
+    .detail-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:18px; }
+    .mini { background:#f8fbff; border:1px solid var(--line); border-radius:12px; padding:12px; }
+    .mini .label { font-size:12px; color:var(--muted); margin-bottom:6px; }
+    .mini .value { font-size:18px; font-weight:700; }
+    .section { padding-bottom:16px; margin-bottom:16px; border-bottom:1px dashed var(--line); }
+    .section:last-child { padding-bottom:0; margin-bottom:0; border-bottom:0; }
+    .section h3 { margin:0 0 8px; font-size:16px; }
+    .section p, .section li { font-size:14px; line-height:1.75; color:#344054; }
+    .section ul { margin:8px 0 0; padding-left:18px; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { text-align:left; padding:14px 16px; border-bottom:1px solid var(--line); font-size:14px; vertical-align:top; }
+    th { background:#f8fbff; color:var(--muted); }
+    .leader-layout { display:grid; grid-template-columns:1.2fr 1fr; gap:18px; }
+    .leader-list { padding:16px; display:flex; flex-direction:column; gap:12px; }
+    .leader-item { border:1px solid var(--line); border-radius:14px; padding:16px; display:flex; justify-content:space-between; gap:12px; }
+    .modal-backdrop { position:fixed; inset:0; background:rgba(15,23,42,.42); display:none; align-items:center; justify-content:center; padding:24px; }
+    .modal-backdrop.show { display:flex; }
+    .modal { width:min(720px,100%); background:#fff; border-radius:18px; overflow:hidden; box-shadow:0 24px 64px rgba(15,23,42,.25); }
+    .modal-header, .modal-footer { padding:16px 18px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); gap:12px; }
+    .modal-footer { border-top:1px solid var(--line); border-bottom:0; justify-content:flex-end; }
+    .modal-body { padding:18px; }
+    .textarea { width:100%; min-height:180px; border:1px solid var(--line); border-radius:14px; padding:14px; resize:vertical; font:inherit; line-height:1.7; }
+    .helper { margin-top:10px; color:var(--muted); font-size:13px; }
+    .close { border:0; background:transparent; font-size:22px; color:var(--muted); cursor:pointer; }
+    @media (max-width:1280px) { .cards,.detail-grid { grid-template-columns:repeat(2,1fr);} .workspace,.leader-layout { grid-template-columns:1fr; } }
+    @media (max-width:900px) { .app { grid-template-columns:1fr; } .cards,.detail-grid { grid-template-columns:1fr; } .topbar { flex-direction:column; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">生产安全事故统计分析系统<small>事故风险预警模块 · HTML 原型</small></div>
+      <div class="nav-title">系统导航</div>
+      <button class="nav-item"><span>首页</span></button>
+      <button class="nav-item"><span>统计分析报告</span></button>
+      <button class="nav-item active"><span>风险预警</span><span class="badge red">3</span></button>
+      <button class="nav-item"><span>数据查询</span></button>
+      <button class="nav-item"><span>系统管理</span></button>
+      <div class="nav-title">原型视图</div>
+      <button class="nav-item active proto-tab" data-view="monitor"><span>监控总览</span></button>
+      <button class="nav-item proto-tab" data-view="archive"><span>预警归档</span></button>
+      <button class="nav-item proto-tab" data-view="config"><span>规则配置</span></button>
+      <button class="nav-item proto-tab" data-view="leader"><span>领导视图</span></button>
+    </aside>
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1>事故风险预警模块产品原型</h1>
+          <div class="sub">模块级 HTML 原型示例，包含监控、处置、归档、规则配置和领导视图。</div>
+        </div>
+        <div class="toolbar">
+          <button class="btn">刷新数据</button>
+          <button class="btn">导出截图清单</button>
+          <button class="btn primary" data-open="dispose">模拟处置</button>
+        </div>
+      </div>
+
+      <section class="view active" id="monitor">
+        <div class="cards">
+          <div class="card"><div class="label">待处置预警</div><div class="value">3</div><div class="note">其中红色 1 条，橙色 1 条</div></div>
+          <div class="card"><div class="label">本月已处置</div><div class="value">12</div><div class="note">较上月提升 20%</div></div>
+          <div class="card"><div class="label">活跃高风险预警</div><div class="value">2</div><div class="note">建议优先处理红橙预警</div></div>
+          <div class="card"><div class="label">误报率</div><div class="value">8%</div><div class="note">用于后续模型优化</div></div>
+        </div>
+        <div class="headline"><span>新增 1 条红色预警：建筑施工行业未来 30 天风险显著抬升，请优先处置。</span><button class="btn primary">查看详情</button></div>
+        <div class="workspace">
+          <div class="panel">
+            <div class="panel-header"><div><h2 class="panel-title">预警列表</h2><div class="muted">按生成时间倒序，红色预警置顶</div></div></div>
+            <div class="panel-header">
+              <div class="tabs"><button class="tab active">全部</button><button class="tab">待处置</button><button class="tab">已处置</button><button class="tab">已忽略</button><button class="tab">误报</button></div>
+              <div class="filters"><button class="select">时间</button><button class="select">维度</button><button class="select">等级</button></div>
+            </div>
+            <div class="warning-list">
+              <article class="warning-item red active" data-key="construction">
+                <div class="warning-top"><div><div class="warning-name">建筑施工行业预警</div><div class="muted">2026-03-18 06:00 · 待处置</div></div><span class="level-tag level-red">🔴 红色</span></div>
+                <div class="muted">维度：行业预警</div><div class="score">风险分值：92</div>
+              </article>
+              <article class="warning-item" data-key="district">
+                <div class="warning-top"><div><div class="warning-name">区域预警（铁西区）</div><div class="muted">2026-03-17 06:00 · 待处置</div></div><span class="level-tag level-orange">🟠 橙色</span></div>
+                <div class="muted">维度：区域预警</div><div class="score">风险分值：84</div>
+              </article>
+              <article class="warning-item" data-key="city">
+                <div class="warning-top"><div><div class="warning-name">总量周度预警</div><div class="muted">2026-03-16 06:00 · 待处置</div></div><span class="level-tag level-yellow">🟡 黄色</span></div>
+                <div class="muted">维度：总量预警</div><div class="score">风险分值：72</div>
+              </article>
+              <article class="warning-item" data-key="hunnan">
+                <div class="warning-top"><div><div class="warning-name">区域预警（浑南区）</div><div class="muted">2026-03-15 06:00 · 已处置</div></div><span class="level-tag level-blue">🔵 蓝色</span></div>
+                <div class="muted">维度：区域预警</div><div class="score">风险分值：66</div>
+              </article>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div><h2 class="panel-title" id="detail-title">🔴 红色预警 · 建筑施工行业</h2><div class="muted" id="detail-sub">生成时间：2026-03-18 06:00</div></div>
+              <button class="btn">查看历史记录</button>
+            </div>
+            <div class="detail-body">
+              <div class="detail-grid">
+                <div class="mini"><div class="label">维度</div><div class="value" id="d-dimension">行业预警</div></div>
+                <div class="mini"><div class="label">风险分值</div><div class="value" id="d-score">92</div></div>
+                <div class="mini"><div class="label">预测窗口</div><div class="value" id="d-window">未来30天</div></div>
+                <div class="mini"><div class="label">当前状态</div><div class="value" id="d-status">待处置</div></div>
+              </div>
+              <section class="section"><h3>一、触发原因</h3><p id="d-reason">建筑施工行业近 30 天事故 8 起，高于历史同期均值 4 起，偏高 100%，超过红色阈值。</p></section>
+              <section class="section"><h3>二、历史规律</h3><p id="d-history">近 3 年 3 月下旬该行业均处于高发区间，2024 年同期也出现过类似上升趋势。</p></section>
+              <section class="section"><h3>三、外部因素</h3><p id="d-factor">下周有连续降雨，叠加节后施工复工，对高处坠落和物体打击类事故形成放大效应。</p></section>
+              <section class="section"><h3>四、历史处置记录</h3><ul id="d-records"><li>2025-03-22：曾出现同类预警，已要求开展专项巡查。</li><li>2025-03-24：追加发送部门通知，督促企业报送整改结果。</li></ul></section>
+              <section class="section">
+                <h3>建议动作</h3>
+                <ul id="d-actions"><li>通知建筑施工主管部门对重点工地开展专项巡查。</li><li>重点关注高处坠落、物体打击和临边防护问题。</li><li>要求重点企业 24 小时内反馈整改措施。</li></ul>
+                <div class="actions"><button class="btn primary" data-open="dispose">确认并登记措施</button><button class="btn" data-open="misreport">标记误报</button><button class="btn" id="ignore-btn" style="display:none;">忽略</button></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="archive">
+        <div class="panel">
+          <div class="panel-header"><div><h2 class="panel-title">预警归档</h2><div class="muted">查看已处置、已忽略和误报记录，用于复盘与模型优化。</div></div><div class="filters"><button class="select">时间</button><button class="select">状态</button><button class="select">维度</button></div></div>
+          <table>
+            <thead><tr><th>预警名称</th><th>等级</th><th>维度</th><th>状态</th><th>处理说明</th><th>时间</th></tr></thead>
+            <tbody>
+              <tr><td>浑南区区域预警</td><td><span class="level-tag level-blue">🔵 蓝色</span></td><td>区域预警</td><td>已处置</td><td>已通知属地加强日常巡查，纳入持续跟踪。</td><td>2026-03-15 09:20</td></tr>
+              <tr><td>总量周度预警</td><td><span class="level-tag level-yellow">🟡 黄色</span></td><td>总量预警</td><td>已忽略</td><td>判断为单起偶发事故带来的短期波动。</td><td>2026-03-10 10:05</td></tr>
+              <tr><td>商贸制造行业预警</td><td><span class="level-tag level-orange">🟠 橙色</span></td><td>行业预警</td><td>误报</td><td>历史导入数据口径异常，已修正后重新计算。</td><td>2026-03-02 16:40</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="view" id="config">
+        <div class="panel" style="margin-bottom:18px;">
+          <div class="panel-header"><div><h2 class="panel-title">模型配置</h2><div class="muted">管理员在此调整启用模型和预警阈值，保存后下次任务生效。</div></div><button class="btn primary">保存配置</button></div>
+          <table>
+            <thead><tr><th>模型</th><th>说明</th><th>状态</th></tr></thead>
+            <tbody>
+              <tr><td>趋势外推法</td><td>基于历史趋势判断未来风险，是一期核心模型。</td><td><span class="badge" style="background:#eaf8f1;color:var(--green);">已启用</span></td></tr>
+              <tr><td>相似度匹配法</td><td>参考历史相似时期作为辅助判断，增强结构识别能力。</td><td><span class="badge" style="background:#eaf8f1;color:var(--green);">已启用</span></td></tr>
+              <tr><td>因素关联法</td><td>需接入气象、节假日等外部数据，属于二期规划。</td><td><span class="badge">未启用</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div><h2 class="panel-title">阈值配置</h2><div class="muted">默认分值映射为红橙黄蓝，可按维度分别配置。</div></div><div class="filters"><button class="btn">恢复默认值</button><button class="btn primary">保存配置</button></div></div>
+          <table>
+            <thead><tr><th>预警维度</th><th>红色阈值</th><th>橙色阈值</th><th>黄色阈值</th><th>蓝色阈值</th><th>样本不足降级规则</th></tr></thead>
+            <tbody>
+              <tr><td>总量预警</td><td>90</td><td>80</td><td>70</td><td>60</td><td>不适用</td></tr>
+              <tr><td>行业预警</td><td>88</td><td>78</td><td>68</td><td>58</td><td>近 3 年事故数 &lt; 10，最高不超过黄色</td></tr>
+              <tr><td>区域预警</td><td>85</td><td>75</td><td>65</td><td>55</td><td>近 3 年事故数 &lt; 8，只保留蓝/黄预警</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="view" id="leader">
+        <div class="cards">
+          <div class="card"><div class="label">当前红色预警</div><div class="value">1</div><div class="note">建议立即响应处置</div></div>
+          <div class="card"><div class="label">当前橙色预警</div><div class="value">2</div><div class="note">重点关注行业和区域</div></div>
+          <div class="card"><div class="label">本周新增预警</div><div class="value">4</div><div class="note">较上周增加 1 条</div></div>
+          <div class="card"><div class="label">重点风险领域</div><div class="value" style="font-size:22px;">建筑施工</div><div class="note">当前最需关注的行业</div></div>
+        </div>
+        <div class="leader-layout">
+          <div class="panel"><div class="panel-header"><div><h2 class="panel-title">重点预警摘要</h2><div class="muted">领导视图默认只展示重点结论，不提供处置动作。</div></div></div>
+            <div class="leader-list">
+              <div class="leader-item"><div><div class="warning-name">🔴 建筑施工行业预警</div><div class="muted">未来 30 天风险显著抬升，建议立即部署专项巡查。</div></div><div class="score">92</div></div>
+              <div class="leader-item"><div><div class="warning-name">🟠 铁西区区域预警</div><div class="muted">区域事故集中度提升，建议重点关注属地监管动作。</div></div><div class="score">84</div></div>
+              <div class="leader-item"><div><div class="warning-name">🟡 总量周度预警</div><div class="muted">全市周度总量出现轻度偏离，持续观察即可。</div></div><div class="score">72</div></div>
+            </div>
+          </div>
+          <div class="panel"><div class="panel-header"><div><h2 class="panel-title">当前风险结论</h2><div class="muted">用于高层快速浏览，不展示细碎操作信息。</div></div></div>
+            <div class="detail-body">
+              <section class="section"><h3>总体判断</h3><p>当前系统处于中高风险监控状态，建筑施工行业为本期最主要风险来源，铁西区为重点关注区域。</p></section>
+              <section class="section"><h3>重点原因</h3><ul><li>建筑施工近 30 天事故数高于历史同期 100%。</li><li>3 月下旬属于近年同期高发时段。</li><li>连续降雨叠加节后复工，风险存在放大趋势。</li></ul></section>
+              <section class="section"><h3>建议动作</h3><ul><li>立即部署建筑施工专项巡查。</li><li>督促属地部门加强重点工地检查。</li><li>要求相关处室每日跟踪整改反馈。</li></ul></section>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div><div class="panel-title" id="m-title">处置登记</div><div class="muted" id="m-sub">预警：建筑施工行业预警</div></div>
+        <button class="close" id="m-close">×</button>
+      </div>
+      <div class="modal-body">
+        <textarea class="textarea" id="m-text">已通知建筑施工主管部门开展专项巡查，重点检查高处坠落风险点，并要求重点企业于 24 小时内反馈整改措施。</textarea>
+        <div class="helper" id="m-help">红色预警需填写不少于 20 字的处置措施。</div>
+      </div>
+      <div class="modal-footer"><button class="btn" id="m-cancel">取消</button><button class="btn primary" id="m-ok">提交</button></div>
+    </div>
+  </div>
+
+  <script>
+    const data = {
+      construction: {
+        title:"🔴 红色预警 · 建筑施工行业", sub:"生成时间：2026-03-18 06:00", dimension:"行业预警", score:"92", window:"未来30天", status:"待处置",
+        reason:"建筑施工行业近 30 天事故 8 起，高于历史同期均值 4 起，偏高 100%，超过红色阈值。",
+        history:"近 3 年 3 月下旬该行业均处于高发区间，2024 年同期也出现过类似上升趋势。",
+        factor:"下周有连续降雨，叠加节后施工复工，对高处坠落和物体打击类事故形成放大效应。",
+        records:["2025-03-22：曾出现同类预警，已要求开展专项巡查。","2025-03-24：追加发送部门通知，督促企业报送整改结果。"],
+        actions:["通知建筑施工主管部门对重点工地开展专项巡查。","重点关注高处坠落、物体打击和临边防护问题。","要求重点企业 24 小时内反馈整改措施。"],
+        ignore:false
+      },
+      district: {
+        title:"🟠 橙色预警 · 铁西区区域预警", sub:"生成时间：2026-03-17 06:00", dimension:"区域预警", score:"84", window:"未来30天", status:"待处置",
+        reason:"铁西区近 30 天事故集中度明显升高，事故起数高于历史同期均值 62%。",
+        history:"近两年 3 月中下旬该区域在道路运输和建筑施工领域均出现过集中波动。",
+        factor:"区域内近期施工活动密集，叠加降雨天气，短期风险继续上升。",
+        records:["2025-03-18：曾组织属地开展重点路段排查。","2025-03-20：已要求报送隐患整改情况。"],
+        actions:["通知铁西区属地监管部门加强重点区域巡查。","重点核查道路运输和建筑施工领域风险点。","持续跟踪属地整改反馈。"],
+        ignore:false
+      },
+      city: {
+        title:"🟡 黄色预警 · 总量周度预警", sub:"生成时间：2026-03-16 06:00", dimension:"总量预警", score:"72", window:"未来7天", status:"待处置",
+        reason:"全市未来 7 天事故总量预测值高于历史同期均值 28%，达到黄色阈值。",
+        history:"近 3 年同期常出现阶段性轻度抬升，但多数在一周内回落。",
+        factor:"受个别行业短期波动影响，总量略有偏高，目前尚未进入高风险区间。",
+        records:["2025-02-12：同类预警曾被记录为轻度波动。","2025-02-14：后续两天风险回落。"],
+        actions:["保持日常监测频率。","关注是否继续演变为行业性风险。","必要时提醒相关处室加强观察。"],
+        ignore:true
+      },
+      hunnan: {
+        title:"🔵 蓝色预警 · 浑南区区域预警", sub:"生成时间：2026-03-15 06:00", dimension:"区域预警", score:"66", window:"未来30天", status:"已处置",
+        reason:"浑南区事故水平较历史同期略有偏高，但仍处于一般风险区间。",
+        history:"近 3 年该区域 3 月通常会出现轻度波动。",
+        factor:"外部因素影响有限，当前以日常监测为主。",
+        records:["2026-03-15：已通知属地加强日常巡查。"],
+        actions:["纳入持续跟踪。","观察是否出现进一步抬升。"],
+        ignore:true
+      }
+    };
+
+    const refs = {
+      title: document.getElementById("detail-title"),
+      sub: document.getElementById("detail-sub"),
+      dimension: document.getElementById("d-dimension"),
+      score: document.getElementById("d-score"),
+      window: document.getElementById("d-window"),
+      status: document.getElementById("d-status"),
+      reason: document.getElementById("d-reason"),
+      history: document.getElementById("d-history"),
+      factor: document.getElementById("d-factor"),
+      records: document.getElementById("d-records"),
+      actions: document.getElementById("d-actions"),
+      ignoreBtn: document.getElementById("ignore-btn")
+    };
+
+    document.querySelectorAll(".warning-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        document.querySelectorAll(".warning-item").forEach((n) => n.classList.remove("active"));
+        item.classList.add("active");
+        const v = data[item.dataset.key];
+        refs.title.textContent = v.title;
+        refs.sub.textContent = v.sub;
+        refs.dimension.textContent = v.dimension;
+        refs.score.textContent = v.score;
+        refs.window.textContent = v.window;
+        refs.status.textContent = v.status;
+        refs.reason.textContent = v.reason;
+        refs.history.textContent = v.history;
+        refs.factor.textContent = v.factor;
+        refs.records.innerHTML = v.records.map(x => `<li>${x}</li>`).join("");
+        refs.actions.innerHTML = v.actions.map(x => `<li>${x}</li>`).join("");
+        refs.ignoreBtn.style.display = v.ignore ? "inline-flex" : "none";
+      });
+    });
+
+    document.querySelectorAll(".proto-tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".proto-tab").forEach((n) => n.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelectorAll(".view").forEach((n) => n.classList.remove("active"));
+        document.getElementById(btn.dataset.view).classList.add("active");
+      });
+    });
+
+    const modal = document.getElementById("modal");
+    const mTitle = document.getElementById("m-title");
+    const mSub = document.getElementById("m-sub");
+    const mText = document.getElementById("m-text");
+    const mHelp = document.getElementById("m-help");
+
+    function openModal(type) {
+      if (type === "dispose") {
+        mTitle.textContent = "处置登记";
+        mSub.textContent = "预警：建筑施工行业预警";
+        mText.value = "已通知建筑施工主管部门开展专项巡查，重点检查高处坠落风险点，并要求重点企业于 24 小时内反馈整改措施。";
+        mHelp.textContent = "红色预警需填写不少于 20 字的处置措施。";
+      } else if (type === "misreport") {
+        mTitle.textContent = "标记误报";
+        mSub.textContent = "请填写误报说明";
+        mText.value = "本次预警由于历史导入数据口径异常导致，实际风险未出现持续上升。";
+        mHelp.textContent = "误报记录将进入归档，用于后续模型优化。";
+      } else {
+        mTitle.textContent = "忽略预警";
+        mSub.textContent = "仅黄/蓝色预警允许忽略";
+        mText.value = "本次波动主要由单起偶发事故引起，当前已纳入日常跟踪。";
+        mHelp.textContent = "忽略原因必填。";
+      }
+      modal.classList.add("show");
+    }
+
+    document.querySelectorAll("[data-open]").forEach((btn) => btn.addEventListener("click", () => openModal(btn.dataset.open)));
+    refs.ignoreBtn.addEventListener("click", () => openModal("ignore"));
+    function closeModal() { modal.classList.remove("show"); }
+    document.getElementById("m-close").addEventListener("click", closeModal);
+    document.getElementById("m-cancel").addEventListener("click", closeModal);
+    document.getElementById("m-ok").addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+  </script>
+</body>
+</html>
