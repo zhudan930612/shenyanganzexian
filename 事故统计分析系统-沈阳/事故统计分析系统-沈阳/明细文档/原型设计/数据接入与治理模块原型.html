@@ -1,0 +1,385 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>数据接入与治理模块原型</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({startOnLoad:true,theme:'default'});</script>
+  <style>
+    :root{--p:#1A6EBF;--ps:#EBF3FB;--ok:#52C41A;--wa:#FA8C16;--er:#FF4D4F;--bd:#E0E0E0;--bg:#F5F7FA;--tx:#333;--mt:#888}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,'Microsoft YaHei',sans-serif;background:var(--bg);color:var(--tx)}
+    .top{position:fixed;top:0;left:0;right:0;height:48px;background:#fff;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:120}
+    .top strong{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56vw}
+    .pill{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid #ffd591;background:#fff7e6;color:#8c5b13}
+    .side{position:fixed;top:48px;left:0;bottom:0;width:240px;background:#fff;border-right:1px solid var(--bd);padding-top:10px;z-index:90}
+    .cap{font-size:12px;color:var(--mt);padding:0 16px 8px}
+    .nav{width:100%;border:0;background:transparent;text-align:left;padding:12px 16px;border-left:3px solid transparent;cursor:pointer;font-size:14px}
+    .nav.active{border-left-color:var(--p);background:var(--ps);color:var(--p);font-weight:600}
+    .main{margin-top:48px;margin-left:240px;padding:24px;max-width:1200px;transition:margin-right .25s}
+    .anno-open .main{margin-right:320px}
+    .unit{display:none}.unit.active{display:block}
+    .h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+    .h h2{margin:0;font-size:20px}
+    .sub{margin-top:6px;color:var(--mt);font-size:13px;line-height:1.7}
+    .act{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .btnp,.btns,.btnd,.btnx{height:32px;padding:0 14px;border-radius:4px;font-size:13px;cursor:pointer;border:1px solid transparent;display:inline-flex;align-items:center;gap:6px}
+    .btnp{background:var(--p);color:#fff;border-color:var(--p)}
+    .btns{background:#fff;color:var(--p);border-color:var(--p)}
+    .btnd{background:var(--er);color:#fff;border-color:var(--er)}
+    .btnx{background:#fff;color:var(--tx);border-color:var(--bd)}
+    button[disabled]{opacity:.6;cursor:not-allowed}
+    .sp{width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;animation:r .8s linear infinite}
+    @keyframes r{to{transform:rotate(360deg)}}
+    .sw{border:1px solid var(--bd);background:#fff;border-radius:999px;padding:4px;display:inline-flex;gap:4px}
+    .sw button{border:0;background:transparent;color:var(--mt);border-radius:999px;padding:6px 10px;font-size:12px;cursor:pointer}
+    .sw button.active{background:var(--p);color:#fff}
+    .flow{margin-bottom:12px}
+    .flow summary{cursor:pointer;list-style:none;padding:8px 12px;font-size:13px;color:#666;background:#f5f7fa;border:1px solid var(--bd);border-radius:4px}
+    .flow>div{padding:12px;border:1px solid var(--bd);border-top:none;background:#fff;overflow-x:auto}
+    .card{border:1px solid var(--bd);border-radius:8px;background:#fff}
+    .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}
+    .k{padding:12px}
+    .k .l{font-size:12px;color:var(--mt);margin-bottom:8px}
+    .k .v{font-size:24px;font-weight:700;margin-bottom:4px}
+    .k .n{font-size:12px;color:var(--mt)}
+    .banner{display:none;margin-bottom:12px;border:1px solid #ffa39e;background:#fff1f0;color:#cf1322;border-radius:8px;padding:10px 12px;font-size:13px}
+    .banner.show{display:block}
+    .prog{display:none;margin-bottom:12px;border:1px solid var(--bd);background:#fff;border-radius:8px;padding:10px 12px;font-size:13px}
+    .prog.show{display:block}
+    .tr{height:8px;background:#f0f0f0;border-radius:999px;overflow:hidden;margin-top:8px}
+    .tr i{display:block;width:0;height:100%;background:linear-gradient(90deg,#1A6EBF,#69a8e6);transition:width 1.8s linear}
+    .tool{border:1px solid var(--bd);border-radius:8px;background:#fff;padding:10px;display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-bottom:12px}
+    .f{min-width:180px;display:flex;flex-direction:column;gap:4px}
+    .f label{font-size:12px;color:var(--mt)}
+    input[type=text],input[type=date],input[type=number],select,textarea{height:32px;border:1px solid var(--bd);border-radius:4px;padding:0 8px;font-size:13px;width:100%}
+    textarea{min-height:90px;padding:8px;resize:vertical}
+    .f-d input,.f-d select,.f-d textarea{border-color:var(--bd)}
+    .f-f input,.f-f select,.f-f textarea{border-color:var(--p);box-shadow:0 0 0 2px var(--ps);outline:none}
+    .f-e input,.f-e select,.f-e textarea{border-color:var(--er)}
+    .f-x input{background:#f5f7fa;color:var(--mt);cursor:not-allowed}
+    .err{min-height:16px;font-size:12px;color:var(--er)}
+    table{width:100%;border-collapse:collapse}
+    th,td{font-size:13px;padding:12px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:top;min-height:48px}
+    th{background:#f5f7fa;color:#666}
+    tbody tr:nth-child(even){background:#fafafa}
+    .sel{background:var(--ps)!important}
+    .tw{border:1px solid var(--bd);border-radius:8px;overflow:hidden;background:#fff;margin-bottom:12px}
+    .tag{display:inline-flex;padding:2px 8px;border-radius:4px;color:#fff;font-size:12px;line-height:1.5}
+    .ok{background:var(--ok)}.wa{background:var(--wa)}.er{background:var(--er)}.gd{background:#bfbfbf}
+    .more{color:var(--p);text-decoration:underline;cursor:pointer;text-underline-offset:2px}
+    .dr{display:none;background:#fff!important}.dr.show{display:table-row}
+    .panel{border:1px solid var(--bd);border-radius:8px;background:#fff;padding:12px;font-size:13px;line-height:1.8}
+    .sv{display:none}.sv.active{display:block}
+    .sk{border:1px solid var(--bd);border-radius:8px;background:#fff;padding:12px}
+    .sk i{display:block;height:48px;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,#f1f1f1 25%,#e7e7e7 37%,#f1f1f1 63%);background-size:400% 100%;animation:s 1.2s infinite}
+    @keyframes s{0%{background-position:100% 0}100%{background-position:0 0}}
+    .emp,.errb{border:1px dashed var(--bd);border-radius:8px;background:#fff;padding:32px 16px;text-align:center;color:var(--mt);font-size:13px}
+    .errb{border:1px solid #ffa39e;background:#fff1f0;color:#cf1322}
+    .g2{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+    .st{margin:0;padding:10px 12px;font-size:14px;border-bottom:1px solid var(--bd);background:#fafafa}
+    .rule{padding:10px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;display:flex;justify-content:space-between;gap:8px}
+    .rule:last-child{border-bottom:none}
+    .tabs{display:flex;gap:8px;margin-bottom:12px}
+    .tab{border:1px solid var(--bd);background:#fff;color:var(--mt);border-radius:999px;padding:6px 14px;font-size:13px;cursor:pointer}
+    .tab.active{border-color:var(--p);background:var(--ps);color:var(--p);font-weight:600}
+    .m{display:none}.m.active{display:block}
+    .fg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px}
+    .full{grid-column:1/-1}.star{color:var(--er);margin-right:2px}
+    .steps{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:12px}
+    .step{border:1px solid var(--bd);border-radius:999px;padding:4px 10px;color:var(--mt);background:#fff}
+    .step.active{border-color:var(--p);background:var(--ps);color:var(--p)}
+    .step.done{border-color:var(--ok);background:#f6ffed;color:#389e0d}
+    .up{border:1px dashed #b3d1ee;border-radius:8px;background:#f7fbff;text-align:center;padding:22px;color:#4b6b8d;margin:10px 0;font-size:13px}
+    .wbox{border:1px solid #ffd591;background:#fff7e6;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.8;color:#8c5b13;margin:10px 0}
+    .res{border:1px solid var(--bd);border-radius:8px;background:#fff;padding:14px;font-size:13px;line-height:1.8}
+    .acc{margin-top:12px;border:1px solid var(--bd);background:#fafafa;border-radius:8px;overflow:hidden}
+    .acc summary{cursor:pointer;padding:10px 12px;font-size:13px;color:#666}
+    .acc ul{margin:0;padding:0 16px 12px 32px;font-size:13px;line-height:1.8;color:#555}
+    .anno{position:fixed;top:48px;right:0;bottom:0;width:320px;background:#fff;border-left:1px solid var(--bd);transform:translateX(100%);transition:transform .25s;z-index:100;display:flex;flex-direction:column}
+    .anno-open .anno{transform:translateX(0)}
+    .ah{padding:12px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600}
+    .as{overflow-y:auto;padding:12px;display:grid;gap:10px}
+    .asec{border:1px solid var(--bd);border-radius:8px;overflow:hidden;background:#fff}
+    .asec .hh{border-bottom:1px solid var(--bd);background:#fafafa;padding:8px 10px;font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .asec .bb{padding:10px;font-size:12px;line-height:1.8;color:#555}
+    .asec .bb ul{margin:0;padding-left:16px}
+    .ed{border:1px solid var(--bd);background:#fff;border-radius:4px;height:24px;padding:0 8px;font-size:12px;cursor:pointer;color:#666}
+    .pen{border:1px solid #ffd591;background:#fff7e6;color:#8c5b13;border-radius:4px;padding:6px 8px;margin-bottom:6px}
+    .msel,.mst{display:none}.mc{display:none}
+    .mcard{border:1px solid var(--bd);border-radius:8px;background:#fff;padding:10px;margin-bottom:8px;font-size:13px}
+    .mr{display:flex;justify-content:space-between;gap:8px;padding:4px 0}.mr .l{color:var(--mt);min-width:92px}
+    .mask{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
+    .mask.show{display:flex}
+    .mod{width:min(680px,100%);background:#fff;border:1px solid var(--bd);border-radius:8px;overflow:hidden;z-index:201}
+    .mh{padding:12px;border-bottom:1px solid var(--bd);font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+    .mb{padding:12px;max-height:70vh;overflow:auto;font-size:13px;line-height:1.8}
+    .mf{padding:12px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:8px}
+    .x{border:0;background:transparent;color:var(--mt);font-size:18px;cursor:pointer;line-height:1}
+    .cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .cmp>div{border:1px solid var(--bd);border-radius:4px;padding:10px;background:#fafafa;font-size:13px}
+    .cmp h4{margin:0 0 8px;font-size:13px}
+    .toast{position:fixed;top:60px;right:16px;z-index:300;color:#fff;background:#52c41a;border-radius:4px;padding:8px 12px;font-size:12px;display:none;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+    .toast.show{display:block}.toast.err{background:var(--er)}
+    @media (max-width:1279px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.g2{grid-template-columns:1fr}}
+    @media (max-width:767px){.side{display:none}.top strong{max-width:180px;font-size:13px}.main{margin-left:0!important;margin-right:0!important;padding:12px}.msel{display:block;border:1px solid var(--bd);border-radius:8px;background:#f5f7fa;padding:8px;margin-bottom:8px}.msel label{display:block;color:var(--mt);font-size:12px;margin-bottom:6px}.mst{display:block;overflow-x:auto;margin-bottom:8px}.sw{display:inline-flex;white-space:nowrap;min-width:max-content}.h{flex-direction:column;align-items:stretch}.act{justify-content:flex-start}.act .sw{display:none}.kpis{grid-template-columns:1fr}.fg{grid-template-columns:1fr}.tabs{overflow-x:auto;white-space:nowrap}.tab{flex:0 0 auto}.btnp,.btns,.btnd,.btnx{height:40px;font-size:14px}input[type=text],input[type=date],input[type=number],select,textarea{height:40px;font-size:16px}.tw table{display:none}.mc{display:block}.anno{top:auto;left:0;right:0;bottom:0;width:auto;height:min(80vh,620px);border-left:none;border-top:1px solid var(--bd);transform:translateY(100%)}.anno-open .anno{transform:translateY(0)}.mask{align-items:flex-end;padding:0}.mod{width:100%;max-height:90vh;border-radius:12px 12px 0 0;border-bottom:0}.cmp{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div style="display:flex;align-items:center;gap:8px;min-width:0"><strong>生产安全事故统计分析与智能预警系统 · 数据接入与治理模块原型</strong><span class="pill">🤖 AI草稿</span></div>
+    <button class="btns" id="bAnno">查看标注</button>
+  </header>
+  <aside class="side">
+    <div class="cap">功能单元</div>
+    <button class="nav active" data-u="unit-1">数据自动同步与状态监控</button>
+    <button class="nav" data-u="unit-2">数据清洗与治理</button>
+    <button class="nav" data-u="unit-3">本系统兜底上报入口</button>
+  </aside>
+  <main class="main">
+    <div class="msel"><label for="selU">当前功能单元</label><select id="selU"><option value="unit-1">数据自动同步与状态监控</option><option value="unit-2">数据清洗与治理</option><option value="unit-3">本系统兜底上报入口</option></select></div>
+    <div class="mst" id="mState"></div>
+    <section class="unit active" id="unit-1">
+      <div class="h">
+        <div><h2>功能单元1：数据自动同步与状态监控</h2><div class="sub">入口：系统管理 → 数据同步。覆盖同步监控、失败定位、补录跳转与审计导出。</div></div>
+        <div class="act">
+          <div class="sw" id="u1Sw"><button class="active" data-s="default">默认</button><button data-s="loading">同步中</button><button data-s="empty">空数据</button><button data-s="error">异常</button><button data-s="warning">告警</button></div>
+          <button class="btns" id="bExp">导出</button>
+          <button class="btnp" id="bSync">手动触发同步</button>
+        </div>
+      </div>
+      <details class="flow"><summary>▶ 功能流程图（点击展开）</summary><div><div class="mermaid">flowchart TD
+A([定时任务触发])-->B[优先调用直报接口]
+B-->C[拉取前一日增量]
+C-->D{成功?}
+D--否-->E[记录失败日志]
+E-->F[发送告警通知]
+F-->G[启用兜底上报入口]
+D--是-->H[进入清洗流程]
+H-->I[更新同步状态记录]
+I-->J([触发下游分析任务])</div></div></details>
+      <div class="prog" id="prog">正在执行同步任务，请勿重复提交。<div class="tr"><i id="bar"></i></div></div>
+      <div class="banner" id="warn">⚠ 连续失败 2 次：已升级高优先级告警，请优先补录。</div>
+      <div class="kpis">
+        <div class="card k"><div class="l">最近同步</div><div class="v" id="kTime">2026-03-23 02:01</div><div class="n">状态：成功 · 新增18条</div></div>
+        <div class="card k"><div class="l">本月同步</div><div class="v">45 / 2</div><div class="n">成功/失败</div></div>
+        <div class="card k"><div class="l">失败待补录</div><div class="v" id="kPend">2</div><div class="n">仅失败记录显示补录按钮</div></div>
+        <div class="card k"><div class="l">当日状态</div><div class="v" id="kDay">正常</div><div class="n">无新增不视为失败</div></div>
+      </div>
+      <div class="tool">
+        <div class="f f-d"><label>开始日期</label><input type="date" value="2026-03-01" /></div>
+        <div class="f f-d"><label>结束日期</label><input type="date" value="2026-03-23" /></div>
+        <div class="f f-d"><label>触发方式</label><select><option>全部</option><option>自动</option><option>手动</option></select></div>
+        <button class="btnx" id="bFilter">筛选</button>
+      </div>
+      <div class="sv active" id="u1-default">
+        <div class="tw">
+          <table><thead><tr><th>同步时间</th><th>触发方式</th><th>状态</th><th>数据量</th><th>备注</th><th>操作</th></tr></thead><tbody id="syncBody">
+            <tr class="srow sel"><td>2026-03-23 02:01</td><td>自动</td><td><span class="tag ok">成功</span></td><td>18</td><td>当日增量同步完成</td><td><button class="btnx">查看日志</button></td></tr>
+            <tr class="srow"><td>2026-03-22 02:04</td><td>自动</td><td><span class="tag ok">成功</span></td><td>12</td><td>正常</td><td><button class="btnx">查看日志</button></td></tr>
+            <tr class="srow"><td>2026-03-21 02:05</td><td>自动</td><td><span class="tag er">失败</span></td><td>0</td><td><span class="more" data-d="d3">接口超时（点击展开）</span></td><td><button class="btns retry" data-r="2026-03-20 ~ 2026-03-21">重新补录</button></td></tr>
+            <tr class="dr" id="d3"><td colspan="6">错误码：SYNC_TIMEOUT_504；失败时间：2026-03-21 02:05；建议：检查网络后重试。</td></tr>
+            <tr class="srow"><td>2026-03-20 09:15</td><td>手动</td><td><span class="tag wa">补录</span></td><td>5</td><td>03-19数据补录完成</td><td><button class="btnx">查看日志</button></td></tr>
+            <tr class="srow"><td>2026-03-19 02:03</td><td>自动</td><td><span class="tag er">失败</span></td><td>0</td><td><span class="more" data-d="d5">权限异常（点击展开）</span></td><td><button class="btns retry" data-r="2026-03-18 ~ 2026-03-19">重新补录</button></td></tr>
+            <tr class="dr" id="d5"><td colspan="6">错误码：AUTH_401；失败时间：2026-03-19 02:03；建议：确认授权路径（AC-01）。</td></tr>
+          </tbody></table>
+          <div class="mc">
+            <div class="mcard"><div class="mr"><span class="l">同步时间</span><span>2026-03-23 02:01</span></div><div class="mr"><span class="l">触发方式</span><span>自动</span></div><div class="mr"><span class="l">状态</span><span class="tag ok">成功</span></div><div class="mr"><span class="l">数据量</span><span>18</span></div></div>
+            <div class="mcard"><div class="mr"><span class="l">同步时间</span><span>2026-03-21 02:05</span></div><div class="mr"><span class="l">状态</span><span class="tag er">失败</span></div><button class="btns retry" data-r="2026-03-20 ~ 2026-03-21">重新补录</button></div>
+          </div>
+        </div>
+        <div class="panel" id="pSync">当前选中：2026-03-23 02:01 自动同步成功，新增18条，已触发下游任务。</div>
+      </div>
+      <div class="sv" id="u1-loading"><div class="sk"><i></i><i></i><i></i></div></div>
+      <div class="sv" id="u1-empty"><div class="emp">◯ 暂无数据<br />当前筛选条件下未找到同步记录。</div></div>
+      <div class="sv" id="u1-error"><div class="errb">加载失败，请刷新重试。错误码：SYNC_PAGE_500</div></div>
+      <details class="acc"><summary>▼ 验收要点</summary><ul><li>每日凌晨自动同步并写入日志。</li><li>失败触发告警，可查看失败原因并补录。</li><li>支持时间筛选与导出。</li><li>支持手动触发，同步中禁止重复提交。</li><li>连续失败2次自动升级告警等级。</li></ul></details>
+    </section>
+
+    <section class="unit" id="unit-2">
+      <div class="h"><div><h2>功能单元2：数据清洗与治理</h2><div class="sub">入口：系统管理 → 数据同步 → 数据质量。查看质量指标、待核查记录和规则状态。</div></div></div>
+      <details class="flow"><summary>▶ 功能流程图（点击展开）</summary><div><div class="mermaid">flowchart TD
+A([原始数据到达])-->B[去重检测]
+B-->C[字段标准化]
+C-->D[异常值检测]
+D-->E[必填字段补全]
+E-->F[写入数据仓库]
+F-->G[生成质量报告]
+G-->H{异常超阈值?}
+H--是-->I[告警通知管理员]
+H--否-->J([结束])
+I-->J</div></div></details>
+      <div class="kpis" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="card k"><div class="l">今日入库数</div><div class="v">128</div><div class="n">同步+兜底汇总</div></div><div class="card k"><div class="l">自动补全数</div><div class="v">16</div><div class="n">事故等级自动计算</div></div><div class="card k"><div class="l">待核查数</div><div class="v" id="kCheck">3</div><div class="n">异常值待人工复核</div></div></div>
+      <div class="g2">
+        <div>
+          <div class="tw"><h3 class="st">待核查记录</h3>
+            <table><thead><tr><th>事故编号</th><th>异常字段</th><th>异常原因</th><th>状态</th><th>操作</th></tr></thead><tbody id="rb">
+              <tr data-id="q1"><td>SY20260323-001</td><td>死亡人数</td><td>死亡人数35人，超特别重大阈值</td><td><span class="tag wa">待核查</span></td><td><button class="btnx raw" data-id="q1">查看原始数据</button> <button class="btns mark" data-id="q1">标记已核查</button></td></tr>
+              <tr data-id="q2"><td>SY20260322-014</td><td>行业代码</td><td>行业代码无法映射，标记待标准化</td><td><span class="tag wa">待核查</span></td><td><button class="btnx raw" data-id="q2">查看原始数据</button> <button class="btns mark" data-id="q2">标记已核查</button></td></tr>
+              <tr data-id="q3"><td>SY20260322-078</td><td>事故等级</td><td>死亡/重伤冲突，自动修正后需复核</td><td><span class="tag wa">待核查</span></td><td><button class="btnx raw" data-id="q3">查看原始数据</button> <button class="btns mark" data-id="q3">标记已核查</button></td></tr>
+              <tr><td>SY20260321-055</td><td>重伤人数</td><td>已人工核查，录入正确</td><td><span class="tag ok">已核查</span></td><td><button class="btnx raw" data-id="q4">查看原始数据</button></td></tr>
+              <tr><td>SY20260321-018</td><td>区县编码</td><td>编码更新后自动修正</td><td><span class="tag ok">已核查</span></td><td><button class="btnx raw" data-id="q5">查看原始数据</button></td></tr>
+            </tbody></table>
+            <div class="mc"><div class="mcard"><div class="mr"><span class="l">事故编号</span><span>SY20260323-001</span></div><div class="mr"><span class="l">异常字段</span><span>死亡人数</span></div><div class="mr"><span class="l">状态</span><span class="tag wa">待核查</span></div><button class="btnx raw" data-id="q1">查看原始数据</button></div><div class="mcard"><div class="mr"><span class="l">事故编号</span><span>SY20260322-014</span></div><div class="mr"><span class="l">异常字段</span><span>行业代码</span></div><div class="mr"><span class="l">状态</span><span class="tag wa">待核查</span></div><button class="btnx raw" data-id="q2">查看原始数据</button></div></div>
+          </div>
+        </div>
+        <div><div class="card"><h3 class="st">清洗规则状态（只读）</h3><div class="rule"><span>事故等级自动计算规则</span><span class="tag ok">已启用</span></div><div class="rule"><span>事故编号去重规则</span><span class="tag ok">已启用</span></div><div class="rule"><span>行业代码标准化映射</span><span class="tag wa">待补齐字典</span></div><div class="rule"><span>异常值阈值规则</span><span class="tag wa">待业务确认</span></div><div class="panel" style="margin:10px">规则变更需走配置变更流程，前端仅展示状态。</div></div></div>
+      </div>
+      <details class="acc"><summary>▼ 验收要点</summary><ul><li>同一事故编号不重复入库。</li><li>事故等级可自动计算填充。</li><li>异常值标记待核查但不阻断入库。</li><li>管理员可查看并标记已核查。</li><li>输出质量报告指标。</li></ul></details>
+    </section>
+
+    <section class="unit" id="unit-3">
+      <div class="h"><div><h2>功能单元3：本系统兜底上报入口（手动录入/模板导入上传）</h2><div class="sub">入口：系统管理 → 数据同步 → 兜底上报入口。支持手动录入和模板导入双路径。</div></div></div>
+      <details class="flow"><summary>▶ 功能流程图（点击展开）</summary><div><div class="mermaid">flowchart TD
+A([进入兜底上报入口])-->B{选择方式}
+B--手动录入-->C[填写同口径字段并提交]
+B--模板导入-->D[下载模板并上传文件]
+D-->E[预览校验]
+E-->F{校验通过?}
+F--否-->G[提示错误并禁止导入]
+F--是-->H[确认导入]
+C-->I[执行清洗流程]
+H-->I
+I-->J[写入数据仓库]
+J-->K([生成导入结果报告])</div></div></details>
+      <div class="tabs"><button class="tab active" data-m="manual">手动录入</button><button class="tab" data-m="import">模板导入</button></div>
+      <div class="m active" id="m-manual">
+        <form id="mf" class="card" style="padding:12px">
+          <div class="fg">
+            <div class="f f-d" data-n="id"><label><span class="star">*</span>事故编号</label><input name="id" type="text" placeholder="例如 SY20260323-101" /><div class="err"></div></div>
+            <div class="f f-d" data-n="date"><label><span class="star">*</span>事故日期</label><input name="date" type="date" value="2026-03-23" /><div class="err"></div></div>
+            <div class="f f-d" data-n="ind"><label><span class="star">*</span>行业分类</label><select name="ind"><option value="">请选择</option><option>建筑施工</option><option>化工</option><option>交通运输</option><option>矿山</option></select><div class="err"></div></div>
+            <div class="f f-d" data-n="dist"><label><span class="star">*</span>所属区县</label><select name="dist"><option value="">请选择</option><option>铁西区</option><option>浑南区</option><option>和平区</option><option>于洪区</option></select><div class="err"></div></div>
+            <div class="f f-d" data-n="death"><label><span class="star">*</span>死亡人数</label><input name="death" type="number" min="0" value="0" /><div class="err"></div></div>
+            <div class="f f-d" data-n="inj"><label><span class="star">*</span>重伤人数</label><input name="inj" type="number" min="0" value="0" /><div class="err"></div></div>
+            <div class="f f-d full" data-n="sum"><label><span class="star">*</span>事故简述</label><textarea name="sum"></textarea><div class="err"></div></div>
+            <div class="f f-d" data-n="rep"><label><span class="star">*</span>上报人</label><input name="rep" type="text" placeholder="例如 张三（事故调查科）" /><div class="err"></div></div>
+            <div class="f f-x"><label>来源标识</label><input value="兜底上报" disabled /><div class="err"></div></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btnp" id="mSub" type="submit">提交并入库</button><button class="btnx" type="reset">重置</button></div>
+        </form>
+        <div class="tw" style="margin-top:12px"><h3 class="st">上报操作日志（最近记录）</h3><table><thead><tr><th>时间</th><th>操作人</th><th>上报方式</th><th>记录/文件</th><th>数据量</th><th>状态</th></tr></thead><tbody id="log"><tr><td>2026-03-23 10:40</td><td>李四</td><td>手动录入</td><td>SY20260323-090</td><td>1</td><td><span class="tag ok">成功</span></td></tr><tr><td>2026-03-23 09:30</td><td>王五</td><td>模板导入</td><td>fallback_20260323.xlsx</td><td>120</td><td><span class="tag wa">含警告</span></td></tr><tr><td>2026-03-22 17:08</td><td>赵六</td><td>模板导入</td><td>history_20260322.xlsx</td><td>350</td><td><span class="tag ok">成功</span></td></tr><tr><td>2026-03-22 11:15</td><td>张三</td><td>手动录入</td><td>SY20260322-044</td><td>1</td><td><span class="tag ok">成功</span></td></tr><tr><td>2026-03-21 16:40</td><td>李四</td><td>模板导入</td><td>sync_patch_20260321.xlsx</td><td>85</td><td><span class="tag er">失败</span></td></tr></tbody></table><div class="mc"><div class="mcard"><div class="mr"><span class="l">时间</span><span>2026-03-23 10:40</span></div><div class="mr"><span class="l">方式</span><span>手动录入</span></div><div class="mr"><span class="l">状态</span><span class="tag ok">成功</span></div></div><div class="mcard"><div class="mr"><span class="l">时间</span><span>2026-03-23 09:30</span></div><div class="mr"><span class="l">方式</span><span>模板导入</span></div><div class="mr"><span class="l">状态</span><span class="tag wa">含警告</span></div></div></div></div>
+      </div>
+      <div class="m" id="m-import">
+        <div class="card" style="padding:12px">
+          <div class="steps"><span class="step active" id="s1">1 上传文件</span><span>→</span><span class="step" id="s2">2 预览校验</span><span>→</span><span class="step" id="s3">3 确认导入</span></div>
+          <div id="pref" class="wbox" style="display:none"></div>
+          <div id="st1"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btns" type="button" id="dl">下载导入模板</button><button class="btnx" type="button" id="pick">选择文件</button><input type="file" id="file" accept=".xlsx,.csv" style="display:none" /></div><div class="up" id="drop">拖拽文件到此处，或点击“选择文件”<br />支持 .xlsx 格式，建议单次不超过 5000 条（AC-18 待确认）</div><div id="fname" style="font-size:13px;color:#666"></div><div style="margin-top:12px"><button class="btnp" id="n2" type="button">下一步</button></div></div>
+          <div id="st2" style="display:none"><div class="wbox">解析结果：共120行，错误0行，警告3行，可导入120行。<br />⚠ 第5行：事故等级为空，将自动计算。<br />⚠ 第12行：行业代码无法识别，保留原值并标记“待标准化”。<br />⚠ 第78行：与已有记录重复，将覆盖原记录并保留日志。</div><div class="tw"><table><thead><tr><th>事故编号</th><th>事故日期</th><th>行业</th><th>区县</th><th>死亡</th><th>校验结果</th></tr></thead><tbody><tr><td>SY20260320-001</td><td>2026-03-20</td><td>建筑施工</td><td>铁西区</td><td>0</td><td><span class="tag ok">通过</span></td></tr><tr><td>SY20260320-002</td><td>2026-03-20</td><td>化工</td><td>浑南区</td><td>1</td><td><span class="tag wa">警告</span></td></tr><tr><td>SY20260320-003</td><td>2026-03-20</td><td>交通运输</td><td>和平区</td><td>0</td><td><span class="tag ok">通过</span></td></tr><tr><td>SY20260320-004</td><td>2026-03-20</td><td>矿山</td><td>于洪区</td><td>2</td><td><span class="tag wa">警告</span></td></tr><tr><td>SY20260320-005</td><td>2026-03-20</td><td>建筑施工</td><td>铁西区</td><td>0</td><td><span class="tag ok">通过</span></td></tr></tbody></table></div><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btnx" id="back" type="button">重新上传</button><button class="btnp" id="imp" type="button">确认导入</button></div></div>
+          <div id="st3" style="display:none"><div class="res">导入完成。<br />成功：117 条<br />警告：3 条（字段补全/覆盖更新）<br />跳过：0 条<br />结果通知已发送给操作人，来源标识已写入“兜底上报”。</div><div style="margin-top:12px"><button class="btnp" id="again" type="button">新建下一次导入</button></div></div>
+        </div>
+      </div>
+      <details class="acc"><summary>▼ 验收要点</summary><ul><li>支持手动录入与模板导入两种兜底方式。</li><li>提供标准模板下载。</li><li>上传后自动校验，错误文件禁止导入并提示错误行。</li><li>校验通过后展示预览与警告信息。</li><li>导入完成输出成功/警告/跳过数量。</li><li>录入和导入均记录完整操作日志。</li></ul></details>
+    </section>
+  </main>
+
+  <aside class="anno">
+    <div class="ah"><span>📋 开发参考面板</span><button class="btnx" style="height:28px" id="cAnno">收起</button></div>
+    <div class="as">
+      <div class="asec"><div class="hh"><span>📖 功能说明</span><button class="ed" id="eDesc">✏ 编辑</button></div><div class="bb" id="desc" contenteditable="false"></div></div>
+      <div class="asec"><div class="hh">🔗 交互说明</div><div class="bb" id="inter"></div></div>
+      <div class="asec"><div class="hh">📐 业务规则</div><div class="bb" id="rule"></div></div>
+      <div class="asec"><div class="hh">⚠ 待确认项</div><div class="bb" id="pend"></div></div>
+    </div>
+  </aside>
+
+  <div class="mask" id="mSync"><div class="mod"><div class="mh"><span>确认执行手动同步</span><button class="x" data-c="mSync">×</button></div><div class="mb">将立即执行一次增量同步。执行期间按钮置灰并显示“同步中…”。是否继续？</div><div class="mf"><button class="btnx" data-c="mSync">取消</button><button class="btnp" id="doSync">确认执行</button></div></div></div>
+  <div class="mask" id="mRaw"><div class="mod"><div class="mh"><span>原始字段与清洗后字段对比（只读）</span><button class="x" data-c="mRaw">×</button></div><div class="mb"><div id="rt" style="font-weight:600;margin-bottom:8px"></div><div class="cmp"><div><h4>原始数据</h4><div id="ra"></div></div><div><h4>清洗后数据</h4><div id="rbx"></div></div></div></div><div class="mf"><button class="btnp" data-c="mRaw">关闭</button></div></div></div>
+  <div class="toast" id="toast"></div>
+  <script>
+    const meta={
+      'unit-1':{i:1,desc:'<p><strong>功能目标：</strong>每日自动同步事故增量数据，并提供失败告警与补录入口，保证数据连续性。</p><p><strong>使用场景：</strong>系统管理员查看同步结果、定位失败原因、执行手动同步和补录。</p><p><strong>涉及角色：</strong>系统管理员</p>',inter:['手动触发同步：点击确认后立即执行，同步期间按钮显示“同步中…”。','失败记录行：点击失败原因展开详情，展示错误码、失败时间和重试建议。','补录按钮：仅失败记录显示，跳转兜底上报入口并预填日期范围。'],rule:['同步记录永久保存，不可删除。','手动同步不影响次日自动同步。','连续失败超过2次自动升级高优先级告警。','接口超时（>60秒）按失败处理并触发告警。'],pend:['⚠ [AC-04] 告警通知方式（系统消息/短信/邮件）待确认。','⚠ [AC-16] 定时任务触发时间是否开放配置待确认。']},
+      'unit-2':{i:2,desc:'<p><strong>功能目标：</strong>统一去重、标准化、异常检测与补全，确保分析口径一致。</p><p><strong>使用场景：</strong>管理员查看质量报告并复核异常记录。</p><p><strong>涉及角色：</strong>系统管理员</p>',inter:['点击“查看原始数据”展示原始字段与清洗字段对比（只读）。','清洗规则状态仅展示，不支持前端直接修改。'],rule:['异常数据标记待核查但不阻断入库。','同一事故编号冲突时以最新版本覆盖并保留来源标识。','核查确认后记录标记为已核查并移出待核查列表。'],pend:['⚠ [AC-02] 行业分类映射表依赖甲方数据字典。','⚠ [AC-17] 异常值判定阈值需业务专家确认。']},
+      'unit-3':{i:3,desc:'<p><strong>功能目标：</strong>直报对接不可用时提供同口径兜底上报，保障数据不断档。</p><p><strong>使用场景：</strong>管理员执行单条补录、批量导入、校验预览与结果追踪。</p><p><strong>涉及角色：</strong>系统管理员</p>',inter:['支持手动录入与模板导入切换。','模板导入需先校验再确认导入，警告项可导入并在结果中标注。','提交动作防重：按钮loading后2秒恢复。'],rule:['字段结构、校验规则、枚举值必须与国家直报系统一致。','格式错误或必填缺失时禁止导入。','重复事故编号按更新处理并写入审计日志。'],pend:['⚠ [AC-02] 导入模板字段清单待甲方提供。','⚠ [AC-18] 单次导入上限建议5000条，最终值待确认。']}
+    };
+    const raw={q1:{t:'事故编号：SY20260323-001',a:'死亡35，重伤8，事故等级空',b:'死亡35，重伤8，事故等级=特别重大（自动计算）'},q2:{t:'事故编号：SY20260322-014',a:'行业代码：X-UNK',b:'行业代码：X-UNK（待标准化）'},q3:{t:'事故编号：SY20260322-078',a:'死亡2，重伤51，等级一般',b:'死亡2，重伤51，等级重大（自动修正）'},q4:{t:'事故编号：SY20260321-055',a:'重伤12，等级较大',b:'重伤12，等级较大（人工确认）'},q5:{t:'事故编号：SY20260321-018',a:'区县编码：210115X',b:'区县编码：210115（修正）'}};
+    let cur='unit-1',edit=false,file='',pref='';
+    const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
+    function show(msg,err=false){const t=$('#toast');t.textContent=msg;t.classList.toggle('err',err);t.classList.add('show');clearTimeout(show.tm);show.tm=setTimeout(()=>t.classList.remove('show'),3000)}
+    function anno(open){document.body.classList.toggle('anno-open',open);$('#bAnno').textContent=open?'收起标注':'查看标注'}
+    function render(id){const m=meta[id],d=$('#desc'),k='proto_desc_数据接入与治理模块_'+m.i;d.dataset.k=k;d.contentEditable='false';d.style.border='';edit=false;$('#eDesc').textContent='✏ 编辑';d.innerHTML=localStorage.getItem(k)||m.desc;$('#inter').innerHTML='<ul>'+m.inter.map(x=>'<li>'+x+'</li>').join('')+'</ul>';$('#rule').innerHTML='<ul>'+m.rule.map(x=>'<li>'+x+'</li>').join('')+'</ul>';$('#pend').innerHTML=m.pend.length?m.pend.map(x=>'<div class="pen">'+x+'</div>').join(''):'<p style="color:#888">暂无待确认项</p>'}
+    function unit(id,h=true){cur=id;$$('.unit').forEach(x=>x.classList.toggle('active',x.id===id));$$('.nav').forEach(x=>x.classList.toggle('active',x.dataset.u===id));$('#selU').value=id;if(h)location.hash=id;render(id);const ms=$('#mState');if(id==='unit-1'){ms.style.display='block';const c=$('#u1Sw').cloneNode(true);c.id='u1SwM';c.querySelectorAll('button').forEach(b=>b.onclick=()=>state(b.dataset.s));ms.innerHTML='';ms.appendChild(c)}else{ms.style.display='none';ms.innerHTML=''}window.scrollTo({top:0,behavior:'smooth'})}
+    function state(s){$$('#u1Sw button,#u1SwM button').forEach(b=>b.classList.toggle('active',b.dataset.s===s));$$('#unit-1 .sv').forEach(v=>v.classList.remove('active'));$('#warn').classList.remove('show');if(s==='default')$('#u1-default').classList.add('active');if(s==='loading')$('#u1-loading').classList.add('active');if(s==='empty')$('#u1-empty').classList.add('active');if(s==='error')$('#u1-error').classList.add('active');if(s==='warning'){ $('#u1-default').classList.add('active');$('#warn').classList.add('show')}}
+    function pbar(on){const p=$('#prog'),b=$('#bar'),btn=$('#bSync');if(on){p.classList.add('show');b.style.width='0';requestAnimationFrame(()=>b.style.width='100%');btn.disabled=true;btn.innerHTML='<span class="sp"></span>同步中...'}else{p.classList.remove('show');b.style.width='0';btn.disabled=false;btn.textContent='手动触发同步'}}
+    function bindRows(){$$('.srow').forEach(r=>r.onclick=()=>{$$('.srow').forEach(x=>x.classList.remove('sel'));r.classList.add('sel');const c=r.querySelectorAll('td');if(c.length>=5)$('#pSync').textContent='当前选中：'+c[0].textContent+'，触发方式：'+c[1].textContent+'，状态：'+c[2].innerText.trim()+'，数据量：'+c[3].textContent+'，备注：'+c[4].innerText.trim()})}
+    function lbtn(btn,text,done){const o=btn.innerHTML;btn.disabled=true;btn.innerHTML='<span class="sp"></span>'+text;setTimeout(()=>{btn.disabled=false;btn.innerHTML=o;done&&done()},2000)}
+    function toImp(r){pref=r;unit('unit-3');tab('import');const p=$('#pref');p.style.display='block';p.textContent='已从失败记录跳转补录，预填日期范围：'+r;show('已跳转到兜底上报入口并预填日期范围')}
+    function tab(m){$$('.tab').forEach(t=>t.classList.toggle('active',t.dataset.m===m));$$('.m').forEach(v=>v.classList.toggle('active',v.id==='m-'+m))}
+    function fstate(w,s){w.classList.remove('f-d','f-f','f-e','f-x');w.classList.add('f-'+s)}
+    function valid(form){let ok=true;const names=['id','date','ind','dist','death','inj','sum','rep'];names.forEach(n=>{const i=form.querySelector('[name="'+n+'"]'),w=form.querySelector('[data-n="'+n+'"]'),e=w.querySelector('.err');if(!i.value||!String(i.value).trim()){fstate(w,'e');e.textContent='该字段不能为空';ok=false;return}if(n==='date'&&i.value>'2026-03-23'){fstate(w,'e');e.textContent='事故日期不可晚于今日';ok=false;return}if((n==='death'||n==='inj')&&Number(i.value)<0){fstate(w,'e');e.textContent='数字必须大于等于0';ok=false;return}fstate(w,'d');e.textContent='' });return ok}
+    function lvl(d,i){if(d>=30||i>=100)return'特别重大';if(d>=10||i>=50)return'重大';if(d>=3||i>=10)return'较大';return'一般'}
+    function addLog(f){const lv=lvl(Number(f.death.value),Number(f.inj.value));$('#log').insertAdjacentHTML('afterbegin','<tr><td>2026-03-23 11:20</td><td>'+f.rep.value+'</td><td>手动录入</td><td>'+f.id.value+'</td><td>1</td><td><span class="tag ok">成功</span></td></tr>');show('提交成功，事故等级判定为：'+lv)}
+    function step(s){$('#st1').style.display=s===1?'block':'none';$('#st2').style.display=s===2?'block':'none';$('#st3').style.display=s===3?'block':'none';$('#s1').className='step'+(s===1?' active':s>1?' done':'');$('#s2').className='step'+(s===2?' active':s>2?' done':'');$('#s3').className='step'+(s===3?' active':'')}
+    function reset(){step(1);$('#file').value='';$('#fname').textContent='';file=''}
+    function dl(){const txt='事故编号,事故日期,行业分类,所属区县,死亡人数,重伤人数,事故简述\nSY20260323-001,2026-03-23,建筑施工,铁西区,0,1,模板示例';const b=new Blob([txt],{type:'text/csv;charset=utf-8;'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='兜底上报导入模板.xlsx';a.click();URL.revokeObjectURL(u);show('导入模板已下载')}
+    function exp(){const btn=$('#bExp');btn.disabled=true;btn.textContent='导出中...';const rows=[...$$('#syncBody tr.srow')].map(r=>[...r.children].map(c=>c.innerText.trim()).join(',')).join('\n');setTimeout(()=>{const b=new Blob(['同步时间,触发方式,状态,数据量,备注,操作\n'+rows],{type:'text/csv;charset=utf-8;'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='同步记录导出.csv';a.click();URL.revokeObjectURL(u);btn.disabled=false;btn.textContent='导出';show('导出完成')},1000)}
+    function open(id){$('#'+id).classList.add('show')}function close(id){$('#'+id).classList.remove('show')}
+    function init(){
+      $('#bAnno').onclick=()=>anno(!document.body.classList.contains('anno-open'));
+      $('#cAnno').onclick=()=>anno(false);
+      $('#eDesc').onclick=()=>{const d=$('#desc');if(edit){d.contentEditable='false';d.style.border='';localStorage.setItem(d.dataset.k,d.innerHTML);$('#eDesc').textContent='✏ 编辑';edit=false;show('已保存')}else{d.contentEditable='true';d.style.border='1px solid #1A6EBF';d.style.borderRadius='4px';d.focus();$('#eDesc').textContent='💾 保存';edit=true}};
+
+      $$('.nav').forEach(n=>n.onclick=()=>unit(n.dataset.u));
+      $('#selU').onchange=e=>unit(e.target.value);
+
+      $$('#u1Sw button').forEach(b=>b.onclick=()=>state(b.dataset.s));
+      $$('.more').forEach(m=>m.onclick=()=>$('#'+m.dataset.d).classList.toggle('show'));
+      $$('.retry').forEach(b=>b.onclick=()=>toImp(b.dataset.r||''));
+      bindRows();
+
+      $('#bFilter').onclick=()=>show('筛选条件已应用（演示）');
+      $('#bExp').onclick=exp;
+      $('#bSync').onclick=()=>open('mSync');
+      $('#doSync').onclick=()=>{
+        close('mSync');
+        state('loading');
+        pbar(true);
+        setTimeout(()=>{
+          pbar(false);
+          state('default');
+          $('#kTime').textContent='2026-03-23 11:00';
+          $('#kDay').textContent='正常';
+          $('#syncBody').insertAdjacentHTML('afterbegin','<tr class="srow"><td>2026-03-23 11:00</td><td>手动</td><td><span class="tag ok">成功</span></td><td>8</td><td>手动触发同步完成</td><td><button class="btnx">查看日志</button></td></tr>');
+          bindRows();
+          show('同步任务执行完成');
+        },2000);
+      };
+
+      $$('.raw').forEach(b=>b.onclick=()=>{const d=raw[b.dataset.id];if(!d)return;$('#rt').textContent=d.t;$('#ra').textContent=d.a;$('#rbx').textContent=d.b;open('mRaw')});
+      $$('.mark').forEach(b=>b.onclick=()=>{const tr=document.querySelector('tr[data-id="'+b.dataset.id+'"]');if(!tr)return;tr.remove();$('#kCheck').textContent=Math.max(0,Number($('#kCheck').textContent)-1);show('已标记为已核查')});
+
+      $$('.tab').forEach(t=>t.onclick=()=>tab(t.dataset.m));
+
+      const f=$('#mf');
+      f.addEventListener('submit',e=>{
+        e.preventDefault();
+        if(!valid(f)){show('请先修正表单错误项',true);return}
+        lbtn($('#mSub'),'提交中...',()=>{addLog(f.elements);f.reset();f.querySelectorAll('.f[data-n]').forEach(x=>{fstate(x,'d');x.querySelector('.err').textContent=''})});
+      });
+      f.querySelectorAll('input,select,textarea').forEach(i=>{const w=i.closest('.f');if(!w||w.classList.contains('f-x'))return;i.addEventListener('focus',()=>fstate(w,'f'));i.addEventListener('blur',()=>{if(!w.classList.contains('f-e'))fstate(w,'d')})});
+
+      $('#dl').onclick=dl;
+      $('#pick').onclick=()=>$('#file').click();
+      $('#file').onchange=e=>{if(e.target.files&&e.target.files[0]){file=e.target.files[0].name;$('#fname').textContent='已选择文件：'+file}};
+      $('#drop').addEventListener('dragover',e=>e.preventDefault());
+      $('#drop').addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer.files&&e.dataTransfer.files[0]){file=e.dataTransfer.files[0].name;$('#fname').textContent='已选择文件：'+file}});
+      $('#n2').onclick=()=>{if(!file){show('请先选择导入文件',true);return}step(2)};
+      $('#back').onclick=()=>step(1);
+      $('#imp').onclick=e=>lbtn(e.target,'导入中...',()=>{step(3);show('导入完成')});
+      $('#again').onclick=()=>{reset();show('已重置为新导入流程')};
+
+      $$('[data-c]').forEach(b=>b.onclick=()=>close(b.dataset.c));
+      $$('.mask').forEach(m=>m.onclick=e=>{if(e.target===m)m.classList.remove('show')});
+
+      const h=location.hash.replace('#','');
+      unit(meta[h]?h:'unit-1',false);
+      state('default');
+      if(pref){$('#pref').style.display='block';$('#pref').textContent='已从失败记录跳转补录，预填日期范围：'+pref}
+    }
+
+    init();
+    window.addEventListener('hashchange',()=>{const h=location.hash.replace('#','');if(meta[h]&&h!==cur)unit(h,false)});
+  </script>
+</body>
+</html>
