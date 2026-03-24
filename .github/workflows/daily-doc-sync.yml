@@ -60,5 +60,25 @@ jobs:
           fi
 
           commit_time="$(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M')"
-          git commit -m "docs(sync): ${commit_time} Asia/Shanghai"
+          changed_count="$(git -c core.quotepath=false diff --cached --name-only | wc -l | tr -d ' ')"
+          summary_files="$(git -c core.quotepath=false diff --cached --name-only | head -n 3 | sed 's#^.*/##' | paste -sd ',' - | sed 's/,/, /g')"
+          stat_summary="$(git -c core.quotepath=false diff --cached --shortstat | sed 's/^ *//')"
+          detail_list="$(git -c core.quotepath=false diff --cached --name-status | sed 's/^/- /')"
+
+          if [ "$changed_count" -gt 3 ]; then
+            summary_label="${summary_files} (+$((changed_count - 3)) more files)"
+          else
+            summary_label="${summary_files}"
+          fi
+
+          if [ -z "$summary_label" ]; then
+            summary_label="${changed_count} files"
+          fi
+
+          git commit \
+            -m "docs(sync): ${commit_time} Asia/Shanghai | updated ${summary_label}" \
+            -m "Auto sync summary: ${stat_summary}
+
+Changed files:
+${detail_list}"
           git push
